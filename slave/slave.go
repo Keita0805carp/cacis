@@ -12,7 +12,7 @@ import (
 const BUFFERSIZE = 1024
 
 func Main() {
-  //fmt.Println("This is slave.main()")
+  fmt.Println("This is slave.Main()")
   client()
 }
 
@@ -51,7 +51,6 @@ func client() {
   }
   fmt.Println("Received file Completely")
 }
-
 
 
 func install_microk8s() {

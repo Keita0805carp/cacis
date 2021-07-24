@@ -2,13 +2,80 @@ package master
 
 import (
   "fmt"
+  "io"
+  "net"
+  "os"
+  "strconv"
 )
+
+const BUFFERSIZE = 1024
 
 func Main() {
   export_img()
+  //server()
 }
 
 func send_data(){
+}
+
+func server() {
+  server, err := net.Listen("tcp", "10.0.100.1:27001")
+  if err != nil {
+    fmt.Println("Error listening: ", err)
+  }
+  fmt.Println("Server Started. Waiting for Connections...")
+  for {
+    connection, err := server.Accept()
+    if err != nil {
+      fmt.Println("Error", err)
+      os.Exit(1)
+    }
+    fmt.Println("Client connected")
+    go sendData(connection)
+  }
+}
+
+func sendData(connection net.Conn) {
+	fmt.Println("A client has connected")
+	file, err := os.Open("k8s-dashboard.img")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
+	fileName := fillString(fileInfo.Name(), 64)
+	fmt.Println("Sending filename and filesize")
+	connection.Write([]byte(fileSize))
+	connection.Write([]byte(fileName))
+	sendBuffer := make([]byte, BUFFERSIZE)
+	fmt.Println("Start sending file")
+
+	for {
+		_, err = file.Read(sendBuffer)
+		if err == io.EOF {
+			break
+		}
+		connection.Write(sendBuffer)
+	}
+	fmt.Println("File has been sent, closing connection")
+	return
+}
+
+func fillString(retunString string, toLength int) string {
+	for {
+		lengtString := len(retunString)
+		if lengtString < toLength {
+			retunString = retunString + ":"
+			continue
+		}
+		break
+	}
+	return retunString
 }
 
 func export_img(){
@@ -23,6 +90,7 @@ func export_img(){
     "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
   }
   fmt.Println(images)
+  fmt.Println(len(images))
   fmt.Println()
   fmt.Println(images["cni.img"])
 
