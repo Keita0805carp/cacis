@@ -11,8 +11,8 @@ import (
 const BUFFERSIZE = 1024
 
 func Main() {
-  //export_img()
-  server()
+  export_img()
+  //server()
 }
 
 func send_data(){
@@ -31,11 +31,11 @@ func server() {
       os.Exit(1)
     }
     fmt.Println("Client connected")
-    go sendFileToClient(connection)
+    go sendData(connection)
   }
 }
 
-func sendFileToClient(connection net.Conn) {
+func sendData(connection net.Conn) {
 	fmt.Println("A client has connected")
 	file, err := os.Open("k8s-dashboard.img")
 	if err != nil {
@@ -90,6 +90,7 @@ func export_img(){
     "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
   }
   fmt.Println(images)
+  fmt.Println(len(images))
   fmt.Println()
   fmt.Println(images["cni.img"])
 

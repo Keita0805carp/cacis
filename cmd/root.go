@@ -12,7 +12,7 @@ var (
     RootCmd = &cobra.Command{
         Use: "cacis",
         Run: func(cmd *cobra.Command, args []string) {
-            //cmd.Usage()
+            cmd.Usage()
         },
     }
 )

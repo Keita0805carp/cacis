@@ -5,7 +5,7 @@ import (
 )
 
 func Main() {
-  fmt.Println("This is slave.main()")
+  fmt.Println("This is slave.Main()")
 }
 
 func install_microk8s() {
