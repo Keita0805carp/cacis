@@ -9,17 +9,18 @@ import (
 )
 
 const BUFFERSIZE = 1024
+const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  export_img()
-  //server()
+  //exportImg()
+  server()
 }
 
-func send_data(){
+func transforImg(){
 }
 
 func server() {
-  server, err := net.Listen("tcp", "10.0.100.1:27001")
+  server, err := net.Listen("tcp", MASTER)
   if err != nil {
     fmt.Println("Error listening: ", err)
   }
@@ -37,7 +38,7 @@ func server() {
 
 func sendData(connection net.Conn) {
 	fmt.Println("A client has connected")
-	file, err := os.Open("k8s-dashboard.img")
+	file, err := os.Open("test/hoge1.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -78,7 +79,7 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-func export_img(){
+func exportImg(){
   images := map[string]string {
     "cni.img": "docker.io/calico/cni:v3.13.2",
     "pause.img": "docker.io/calico/kube-controllers:v3.13.2",
