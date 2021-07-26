@@ -6,14 +6,19 @@ import (
   "net"
   "os"
   "strconv"
+  "context"
+
+  "github.com/containerd/containerd"
+  "github.com/containerd/containerd/platforms"
+  "github.com/containerd/containerd/images/archive"
 )
 
 const BUFFERSIZE = 1024
 const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  //exportImg()
-  server()
+  exportImg()
+  //server()
 }
 
 func transforImg(){
@@ -90,10 +95,38 @@ func exportImg(){
     "metrics-server.img": "k8s.gcr.io/metrics-server-arm64:v0.3.6",
     "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
   }
-  fmt.Println(images)
+  //fmt.Println(images)
   fmt.Println(len(images))
-  fmt.Println()
   fmt.Println(images["cni.img"])
+
+  f, err := os.OpenFile("alpine.img", os.O_CREATE|os.O_WRONLY, 0644)
+  defer f.Close()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  ctx := context.Background()
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("docker"))
+  defer client.Close()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  // Pull
+  fmt.Println("Pulling...")
+  image, err := client.Pull(ctx, "docker.io/library/alpine:latest", containerd.WithPullUnpack, containerd.WithPlatform("linux/arm64/v8"))
+  if err != nil {
+    fmt.Println(err)
+    }
+  fmt.Println("Pulled")
+  fmt.Println(image)
+
+  fmt.Println("Exporting")
+  //client.Export(ctx, f)
+  client.Export(ctx, f, archive.WithImage(client.ImageService(), "docker.io/library/alpine:latest"), archive.WithPlatform(platforms.DefaultStrict()))
+  if err != nil {
+    fmt.Println(err)
+    }
 
 }
 
