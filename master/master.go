@@ -128,7 +128,6 @@ func exportImg(fileName, imageName string){
   fmt.Println("Exported")
 }
 
-
 func pullImg(imageName string) {
   fmt.Println("Pulling " + imageName + " ...")
 
