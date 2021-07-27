@@ -9,8 +9,7 @@ import (
   "context"
 
   "github.com/containerd/containerd"
-  //"github.com/containerd/containerd/platforms"
-  //"github.com/containerd/containerd/images"
+  "github.com/containerd/containerd/platforms"
   "github.com/containerd/containerd/images/archive"
 )
 
@@ -129,9 +128,9 @@ func exportImg(fileName, imageName string){
   fmt.Println("Exported")
 }
 
-// TODO all-platforms
+
 func pullImg(imageName string) {
-  fmt.Println("Pulling " + imageName + "...")
+  fmt.Println("Pulling " + imageName + " ...")
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
@@ -140,24 +139,21 @@ func pullImg(imageName string) {
     fmt.Println(err)
     }
 
-  //var hoge v1.Platform
-  //hoge.Architecture = `json:"linux/arm64/v8"`
-
   opts := []containerd.RemoteOpt{
-    containerd.WithPullUnpack,
-    //containerd.WithPlatform(platform),
-    //containerd.WithPlatformMatcher(platforms.Only(hoge)),
     containerd.WithAllMetadata(),
-    containerd.WithPlatformMatcher(platforms.All),
   }
 
-  //image, err := client.Fetch(ctx, imageName, opts...)
-  image, err := client.Pull(ctx, imageName, opts...)
+  contents, err := client.Fetch(ctx, imageName, opts...)
   if err != nil {
     fmt.Println(err)
     }
-  fmt.Print("Debug: image=")
-  fmt.Println(image)
+
+  image := containerd.NewImageWithPlatform(client, contents, platforms.All)
+  if image == nil {
+    fmt.Println("Fail to Pull")
+    }
+  // fmt.Print("Debug: image= ")
+  // fmt.Println(image)
   fmt.Println("Pulled")
 }
 
