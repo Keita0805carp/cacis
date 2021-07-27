@@ -99,6 +99,7 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
+// OK
 func exportImg(fileName, imageName string){
   fmt.Println("Exporting " + imageName + " to " + fileName + "...")
 
@@ -119,7 +120,6 @@ func exportImg(fileName, imageName string){
   opts := []archive.ExportOpt{
     archive.WithImage(imageStore, imageName),
     archive.WithAllPlatforms(),
-    //archive.WithPlatform(platforms.DefaultStrict()),
   }
 
   client.Export(ctx, f, opts...)
@@ -129,6 +129,7 @@ func exportImg(fileName, imageName string){
   fmt.Println("Exported")
 }
 
+// TODO all-platforms
 func pullImg(imageName string) {
   fmt.Println("Pulling " + imageName + "...")
 
@@ -147,7 +148,7 @@ func pullImg(imageName string) {
     //containerd.WithPlatform(platform),
     //containerd.WithPlatformMatcher(platforms.Only(hoge)),
     containerd.WithAllMetadata(),
-    //containerd.WithPlatformMatcher(platforms.All),
+    containerd.WithPlatformMatcher(platforms.All),
   }
 
   //image, err := client.Fetch(ctx, imageName, opts...)
