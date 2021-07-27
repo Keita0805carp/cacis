@@ -17,25 +17,32 @@ const BUFFERSIZE = 1024
 const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  pullImg("docker.io/library/alpine:latest")
-  exportImg("alpine.img", "docker.io/library/alpine:latest")
+  //pullImg("docker.io/library/alpine:latest")
+  //exportImg("alpine.img", "docker.io/library/alpine:latest")
   //server()
+  importAllImg()
 }
 
-func transforImg(){
+func exportAllImg(){
   images := map[string]string {
     "cni.img": "docker.io/calico/cni:v3.13.2",
-    "pause.img": "docker.io/calico/kube-controllers:v3.13.2",
-    "kube-controllers.img": "docker.io/calico/pod2daemon-flexvol:v3.13.2",
-    "pod2daemon.img": "docker.io/calico/node:v3.13.2",
+    "pause.img": "k8s.gcr.io/pause:3.1",
+    "kube-controllers.img": "docker.io/calico/kube-controllers:v3.13.2",
+    "pod2daemon.img": "docker.io/calico/pod2daemon-flexvol:v3.13.2",
     "node.img": "docker.io/calico/node:v3.13.2",
     "coredns.img": "docker.io/coredns/coredns:1.8.0",
     "metrics-server.img": "k8s.gcr.io/metrics-server-arm64:v0.3.6",
     "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
   }
-  //fmt.Println(images)
-  fmt.Println(len(images))
-  //fmt.Println(images["cni.img"])
+
+  fmt.Printf("Pull %d images for Kubernetes Components", len(images))
+  for file, imageRef := range images {
+    fmt.Printf("%s : %s\n", "./output/" + file, imageRef)
+    fmt.Println("start")
+    pullImg(imageRef)
+    exportImg("./output/" + file, imageRef)
+    fmt.Println("end\n")
+    }
 }
 
 func server() {

@@ -17,7 +17,7 @@ const BUFFERSIZE = 1024
 func Main() {
   fmt.Println("This is slave.Main()")
   //client()
-  importImg("docker.io/library/alpine:latest", "alpine.img")
+  importAllImg()
 }
 
 func client() {
@@ -63,6 +63,27 @@ func install_microk8s() {
 func recieve_data() {
 }
 
+func importAllImg() {
+  images := map[string]string {
+    "cni.img": "docker.io/calico/cni:v3.13.2",
+    "pause.img": "docker.io/calico/kube-controllers:v3.13.2",
+    "kube-controllers.img": "docker.io/calico/pod2daemon-flexvol:v3.13.2",
+    "pod2daemon.img": "docker.io/calico/node:v3.13.2",
+    "node.img": "docker.io/calico/node:v3.13.2",
+    "coredns.img": "docker.io/coredns/coredns:1.8.0",
+    "metrics-server.img": "k8s.gcr.io/metrics-server-arm64:v0.3.6",
+    "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
+  }
+
+  fmt.Printf("Import %d images for Kubernetes Components", len(images))
+  for file, imageRef := range images {
+    fmt.Printf("%s : %s\n", "./output/" + file, imageRef)
+    fmt.Println("start")
+    importImg(imageRef, "./output/" + file)
+    fmt.Println("end\n")
+    }
+}
+
 func importImg(imageName, fileName string) {
   fmt.Println("Importing " + imageName + " from " + fileName + "...")
 
@@ -81,7 +102,7 @@ func importImg(imageName, fileName string) {
 
   opts := []containerd.ImportOpt{
     containerd.WithIndexName(imageName),
-    containerd.WithAllPlatforms(true),
+    //containerd.WithAllPlatforms(true),
   }
 
   client.Import(ctx, f, opts...)
