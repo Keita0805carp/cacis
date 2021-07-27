@@ -17,11 +17,25 @@ const BUFFERSIZE = 1024
 const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  exportImg()
+  //pullImg("docker.io/library/alpine:latest")
+  exportImg("alpine.img", "docker.io/library/alpine:latest")
   //server()
 }
 
 func transforImg(){
+  images := map[string]string {
+    "cni.img": "docker.io/calico/cni:v3.13.2",
+    "pause.img": "docker.io/calico/kube-controllers:v3.13.2",
+    "kube-controllers.img": "docker.io/calico/pod2daemon-flexvol:v3.13.2",
+    "pod2daemon.img": "docker.io/calico/node:v3.13.2",
+    "node.img": "docker.io/calico/node:v3.13.2",
+    "coredns.img": "docker.io/coredns/coredns:1.8.0",
+    "metrics-server.img": "k8s.gcr.io/metrics-server-arm64:v0.3.6",
+    "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
+  }
+  //fmt.Println(images)
+  fmt.Println(len(images))
+  //fmt.Println(images["cni.img"])
 }
 
 func server() {
@@ -84,51 +98,59 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-func exportImg(){
-  images := map[string]string {
-    "cni.img": "docker.io/calico/cni:v3.13.2",
-    "pause.img": "docker.io/calico/kube-controllers:v3.13.2",
-    "kube-controllers.img": "docker.io/calico/pod2daemon-flexvol:v3.13.2",
-    "pod2daemon.img": "docker.io/calico/node:v3.13.2",
-    "node.img": "docker.io/calico/node:v3.13.2",
-    "coredns.img": "docker.io/coredns/coredns:1.8.0",
-    "metrics-server.img": "k8s.gcr.io/metrics-server-arm64:v0.3.6",
-    "dashboard.img": "docker.io/kubernetesui/dashboard:v2.0.0",
-  }
-  //fmt.Println(images)
-  fmt.Println(len(images))
-  fmt.Println(images["cni.img"])
-
-  f, err := os.OpenFile("alpine.img", os.O_CREATE|os.O_WRONLY, 0644)
-  defer f.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+func exportImg(outputFileName, imageName string){
+  fmt.Println("Exporting " + imageName + " to " + outputFileName + "...")
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("docker"))
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
   if err != nil {
     fmt.Println(err)
     }
 
-  // Pull
-  fmt.Println("Pulling...")
-  image, err := client.Pull(ctx, "docker.io/library/alpine:latest", containerd.WithPullUnpack, containerd.WithPlatform("linux/arm64/v8"))
-  if err != nil {
-    fmt.Println(err)
-    }
-  fmt.Println("Pulled")
-  fmt.Println(image)
-
-  fmt.Println("Exporting")
-  //client.Export(ctx, f)
-  client.Export(ctx, f, archive.WithImage(client.ImageService(), "docker.io/library/alpine:latest"), archive.WithPlatform(platforms.DefaultStrict()))
+  f, err := os.Create(outputFileName)
+  defer f.Close()
   if err != nil {
     fmt.Println(err)
     }
 
+  imageStore := client.ImageService()
+  opts := []archive.ExportOpt{
+    archive.WithImage(imageStore, imageName),
+    archive.WithPlatform(platforms.DefaultStrict()),
+  }
+
+  client.Export(ctx, f, opts...)
+  if err != nil {
+    fmt.Println(err)
+    }
+  fmt.Println("Exported")
 }
+
+func pullImg(imageName string) {
+  fmt.Println("Pulling " + imageName + "...")
+
+  ctx := context.Background()
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  defer client.Close()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  opts := []containerd.RemoteOpt{
+    containerd.WithPullUnpack,
+    containerd.WithPlatform("linux/arm64/v8"),
+  }
+
+  image, err := client.Pull(ctx, imageName, opts...)
+  if err != nil {
+    fmt.Println(err)
+    }
+  fmt.Print("Debug: image=")
+  fmt.Println(image)
+  fmt.Println("Pulled")
+}
+
 
 func microk8s_enable() {
 }
