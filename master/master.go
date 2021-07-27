@@ -17,7 +17,7 @@ const BUFFERSIZE = 1024
 const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  //pullImg("docker.io/library/alpine:latest")
+  pullImg("docker.io/library/alpine:latest")
   exportImg("alpine.img", "docker.io/library/alpine:latest")
   //server()
 }
@@ -117,7 +117,7 @@ func exportImg(fileName, imageName string){
   imageStore := client.ImageService()
   opts := []archive.ExportOpt{
     archive.WithImage(imageStore, imageName),
-    archive.WithPlatform(platforms.DefaultStrict()),
+    archive.WithAllPlatforms(),
   }
 
   client.Export(ctx, f, opts...)
@@ -128,7 +128,7 @@ func exportImg(fileName, imageName string){
 }
 
 func pullImg(imageName string) {
-  fmt.Println("Pulling " + imageName + "...")
+  fmt.Println("Pulling " + imageName + " ...")
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
@@ -138,16 +138,20 @@ func pullImg(imageName string) {
     }
 
   opts := []containerd.RemoteOpt{
-    containerd.WithPullUnpack,
-    containerd.WithPlatform("linux/arm64/v8"),
+    containerd.WithAllMetadata(),
   }
 
-  image, err := client.Pull(ctx, imageName, opts...)
+  contents, err := client.Fetch(ctx, imageName, opts...)
   if err != nil {
     fmt.Println(err)
     }
-  fmt.Print("Debug: image=")
-  fmt.Println(image)
+
+  image := containerd.NewImageWithPlatform(client, contents, platforms.All)
+  if image == nil {
+    fmt.Println("Fail to Pull")
+    }
+  // fmt.Print("Debug: image= ")
+  // fmt.Println(image)
   fmt.Println("Pulled")
 }
 

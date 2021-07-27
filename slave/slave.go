@@ -7,13 +7,17 @@ import (
   "os"
   "strconv"
   "strings"
+  "context"
+
+  "github.com/containerd/containerd"
 )
 
 const BUFFERSIZE = 1024
 
 func Main() {
   fmt.Println("This is slave.Main()")
-  client()
+  //client()
+  importImg("docker.io/library/alpine:latest", "alpine.img")
 }
 
 func client() {
@@ -59,7 +63,32 @@ func install_microk8s() {
 func recieve_data() {
 }
 
-func import_img() {
+func importImg(imageName, fileName string) {
+  fmt.Println("Importing " + imageName + " from " + fileName + "...")
+
+  ctx := context.Background()
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  defer client.Close()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  f, err := os.Open(fileName)
+  defer f.Close()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  opts := []containerd.ImportOpt{
+    containerd.WithIndexName(imageName),
+    containerd.WithAllPlatforms(true),
+  }
+
+  client.Import(ctx, f, opts...)
+  if err != nil {
+    fmt.Println(err)
+    }
+  fmt.Println("Imported")
 }
 
 func notify() {
