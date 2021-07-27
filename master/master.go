@@ -98,8 +98,8 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-func exportImg(outputFileName, imageName string){
-  fmt.Println("Exporting " + imageName + " to " + outputFileName + "...")
+func exportImg(fileName, imageName string){
+  fmt.Println("Exporting " + imageName + " to " + fileName + "...")
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
@@ -108,7 +108,7 @@ func exportImg(outputFileName, imageName string){
     fmt.Println(err)
     }
 
-  f, err := os.Create(outputFileName)
+  f, err := os.Create(fileName)
   defer f.Close()
   if err != nil {
     fmt.Println(err)
