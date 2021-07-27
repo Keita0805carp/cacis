@@ -9,7 +9,8 @@ import (
   "context"
 
   "github.com/containerd/containerd"
-  "github.com/containerd/containerd/platforms"
+  //"github.com/containerd/containerd/platforms"
+  //"github.com/containerd/containerd/images"
   "github.com/containerd/containerd/images/archive"
 )
 
@@ -17,7 +18,7 @@ const BUFFERSIZE = 1024
 const MASTER = "10.0.100.1:27001"
 
 func Main() {
-  //pullImg("docker.io/library/alpine:latest")
+  pullImg("docker.io/library/alpine:latest")
   exportImg("alpine.img", "docker.io/library/alpine:latest")
   //server()
 }
@@ -117,7 +118,8 @@ func exportImg(fileName, imageName string){
   imageStore := client.ImageService()
   opts := []archive.ExportOpt{
     archive.WithImage(imageStore, imageName),
-    archive.WithPlatform(platforms.DefaultStrict()),
+    archive.WithAllPlatforms(),
+    //archive.WithPlatform(platforms.DefaultStrict()),
   }
 
   client.Export(ctx, f, opts...)
@@ -137,11 +139,18 @@ func pullImg(imageName string) {
     fmt.Println(err)
     }
 
+  //var hoge v1.Platform
+  //hoge.Architecture = `json:"linux/arm64/v8"`
+
   opts := []containerd.RemoteOpt{
     containerd.WithPullUnpack,
-    containerd.WithPlatform("linux/arm64/v8"),
+    //containerd.WithPlatform(platform),
+    //containerd.WithPlatformMatcher(platforms.Only(hoge)),
+    containerd.WithAllMetadata(),
+    //containerd.WithPlatformMatcher(platforms.All),
   }
 
+  //image, err := client.Fetch(ctx, imageName, opts...)
   image, err := client.Pull(ctx, imageName, opts...)
   if err != nil {
     fmt.Println(err)
