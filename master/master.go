@@ -98,7 +98,6 @@ func fillString(retunString string, toLength int) string {
 	return retunString
 }
 
-// OK
 func exportImg(fileName, imageName string){
   fmt.Println("Exporting " + imageName + " to " + fileName + "...")
 

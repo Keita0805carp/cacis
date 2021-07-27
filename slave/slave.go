@@ -63,7 +63,6 @@ func install_microk8s() {
 func recieve_data() {
 }
 
-// OK
 func importImg(imageName, fileName string) {
   fmt.Println("Importing " + imageName + " from " + fileName + "...")
 
