@@ -1,2 +1,2 @@
-# CACIS
-Container-based Adaptive Clustering System
+# cacis
+Container-based Adaptive Clustering IoT System
