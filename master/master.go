@@ -2,10 +2,10 @@ package master
 
 import (
   "fmt"
-  "io"
+  //"io"
   "net"
   "os"
-  "strconv"
+  //"strconv"
   "context"
 
   "github.com/containerd/containerd"
@@ -13,12 +13,12 @@ import (
   "github.com/containerd/containerd/images/archive"
 )
 
-const BUFFERSIZE = 1024
-const MASTER = "10.0.100.1:27001"
-
 func Main() {
-  exportAllImg()
+  //exportAllImg()
+  server()
+  //sendData()
 }
+
 
 func exportAllImg(){
   images := map[string]string {
@@ -42,7 +42,63 @@ func exportAllImg(){
     }
 }
 
+func server() {
+  // Socket
+  l, err := net.Listen("tcp", "localhost:27001")
+  if err != nil {
+    fmt.Println(err)
+    }
+  defer l.Close()
+
+  // File
+  filePath := "./test/hoge1.txt"
+  file, err := os.Open(filePath)
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  fileInfo, err := file.Stat()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  // Wait
+  conn, err := l.Accept()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  buf := make([]byte, fileInfo.Size())
+  if err != nil {
+    fmt.Println(err)
+    }
+  //fmt.Println(buf)
+  file.Read(buf)
+  fmt.Println(buf)
+  conn.Write(buf)
+  fmt.Println(string(buf))
+  conn.Close()
+}
+
 func sendData() {
+  filePath := "./test/hoge1.txt"
+  file, err := os.Open(filePath)
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  fileInfo, err := file.Stat()
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  buf := make([]byte, fileInfo.Size())
+  fmt.Println(file.Read(buf))
+  fmt.Println(buf)
+  fmt.Println(string(buf))
+  fmt.Println(fileInfo)
+  fmt.Println(fileInfo.Name())
+  fmt.Println(fileInfo.Size())
 }
 
 func exportImg(fileName, imageName string){

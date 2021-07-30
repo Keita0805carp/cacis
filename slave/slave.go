@@ -2,20 +2,42 @@ package slave
 
 import (
   "fmt"
-  "io"
+  //"io"
   "net"
   "os"
-  "strconv"
-  "strings"
+  //"strconv"
+  //"strings"
   "context"
 
   "github.com/containerd/containerd"
 )
 
-const BUFFERSIZE = 1024
-
 func Main() {
-  importAllImg()
+  //importAllImg()
+  client()
+}
+
+func client() {
+  // Socket
+  conn, err := net.Dial("tcp", "localhost:27001")
+  if err != nil {
+    fmt.Println(err)
+    }
+  defer conn.Close()
+
+  // File
+  filePath := "./hoge1.txt"
+  file , err := os.Create(filePath)
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  buf := make([]byte, 22)
+  conn.Read(buf)
+  fmt.Println(buf)
+  fmt.Println(string(buf))
+
+  file.Write(buf)
 }
 
 func recieveData() {
