@@ -8,6 +8,8 @@ import (
   //"strconv"
   "context"
 
+  "github.com/keita0805carp/cacis/cacis"
+
   "github.com/containerd/containerd"
   "github.com/containerd/containerd/platforms"
   "github.com/containerd/containerd/images/archive"
@@ -44,20 +46,69 @@ func exportAllImg(){
 
 func server() {
   // Socket
-  l, err := net.Listen("tcp", "localhost:27001")
+  listen, err := net.Listen("tcp", "localhost:27001")
   if err != nil {
     fmt.Println(err)
     }
-  defer l.Close()
+  defer listen.Close()
 
-  // File
-  filePath := "./test/hoge1.txt"
-  file, err := os.Open(filePath)
+  conn, err := listen.Accept()
+  // Recieve Request from slave
+  buf := make([]byte, cacis.CacisLayerSize)
+  _, err = conn.Read(buf)
   if err != nil {
     fmt.Println(err)
+  }
+  fmt.Println("Recieve Request")
+  fmt.Println(buf)
+  rl := cacis.Unmarshal(buf)
+  //fmt.Println(rl)
+  //fmt.Println(rl.Payload)
+  //fmt.Println(string(rl.Payload))
+
+  // Swtich Type
+  if rl.Type == 1 {  // request Image
+    fmt.Println("Type = 1")
+    // File
+    //filePath := "./test/hoge2.txt"
+    filePath := "./alpine.img"
+    file, err := os.Open(filePath)
+    if err != nil {
+	    fmt.Println(err)
     }
 
-  fileInfo, err := file.Stat()
+    fileInfo, err := file.Stat()
+    if err != nil {
+	    fmt.Println(err)
+    }
+    fileBuf := make([]byte, fileInfo.Size())
+    file.Read(fileBuf)
+
+    // Notify Image Size
+    fmt.Println("Notify Image Size")
+    nl := cacis.NotifyImageSize(fileBuf)
+    msg_n := nl.Marshal()
+    fmt.Println(msg_n)
+    conn.Write(msg_n)
+
+    // Send Image
+    fmt.Println("Send Image")
+    sl := cacis.SendImage(fileBuf)
+    msg_s := sl.Marshal()
+    fmt.Println(msg_s)
+    conn.Write(msg_s)
+
+    conn.Close()
+  } else {
+    fmt.Println("Unknown Type")
+    conn.Close()
+  }
+
+
+  /*
+
+  // buffer
+  buf := make([]byte, fileInfo.Size())
   if err != nil {
     fmt.Println(err)
     }
@@ -68,16 +119,13 @@ func server() {
     fmt.Println(err)
     }
 
-  buf := make([]byte, fileInfo.Size())
-  if err != nil {
-    fmt.Println(err)
-    }
   //fmt.Println(buf)
   file.Read(buf)
   fmt.Println(buf)
-  conn.Write(buf)
+  //conn.Write(buf)
   fmt.Println(string(buf))
-  conn.Close()
+  */
+
 }
 
 func sendData() {

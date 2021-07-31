@@ -9,12 +9,15 @@ import (
   //"strings"
   "context"
 
+  "github.com/keita0805carp/cacis/cacis"
+
   "github.com/containerd/containerd"
 )
 
 func Main() {
   //importAllImg()
-  client()
+  //client()
+  requestData()
 }
 
 func client() {
@@ -38,6 +41,57 @@ func client() {
   fmt.Println(string(buf))
 
   file.Write(buf)
+}
+
+func requestData() {
+  conn, err := net.Dial("tcp", "localhost:27001")
+  if err != nil {
+    fmt.Println(err)
+    }
+  defer conn.Close()
+
+  // Request Image
+  fmt.Println("Create Request Packet")
+  sl := cacis.RequestImage()
+  msg_s := sl.Marshal()
+  fmt.Println(msg_s)
+  conn.Write(msg_s)
+  fmt.Println("Send\n\n")
+
+
+  // Recieve Image Size Notification
+  fmt.Println("Image Size Notification")
+  buf := make([]byte, cacis.CacisLayerSize)
+  _, err = conn.Read(buf) //TODO
+  if err != nil {
+    fmt.Println(err)
+    }
+  rl := cacis.Unmarshal(buf)
+  fmt.Println(buf)
+  fmt.Println(string(buf))
+
+  // Recieve Image
+  fmt.Println("Recieve Image")
+  fmt.Println(rl)
+  buf = make([]byte, cacis.CacisLayerSize + rl.Length)
+  _, err = conn.Read(buf)
+  if err != nil {
+    fmt.Println(err)
+    }
+  rl = cacis.Unmarshal(buf)
+  fmt.Println(buf)
+  fmt.Println(string(buf))
+
+
+  // File
+  //filePath := "./hoge2.txt"
+  filePath := "./test/alpine.img"
+  file , err := os.Create(filePath)
+  if err != nil {
+    fmt.Println(err)
+    }
+
+  file.Write(rl.Payload)
 }
 
 func recieveData() {
