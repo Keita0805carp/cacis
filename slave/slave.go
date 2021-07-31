@@ -23,17 +23,13 @@ func Main() {
 func client() {
   // Socket
   conn, err := net.Dial("tcp", "localhost:27001")
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   defer conn.Close()
 
   // File
   filePath := "./hoge1.txt"
   file , err := os.Create(filePath)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   buf := make([]byte, 22)
   conn.Read(buf)
@@ -45,9 +41,7 @@ func client() {
 
 func requestData() {
   conn, err := net.Dial("tcp", "localhost:27001")
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   defer conn.Close()
 
   // Request Image
@@ -63,9 +57,7 @@ func requestData() {
   fmt.Println("Image Size Notification")
   buf := make([]byte, cacis.CacisLayerSize)
   _, err = conn.Read(buf) //TODO
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   rl := cacis.Unmarshal(buf)
   fmt.Println(buf)
   fmt.Println(string(buf))
@@ -75,9 +67,7 @@ func requestData() {
   fmt.Println(rl)
   buf = make([]byte, cacis.CacisLayerSize + rl.Length)
   _, err = conn.Read(buf)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   rl = cacis.Unmarshal(buf)
   fmt.Println(buf)
   fmt.Println(string(buf))
@@ -87,9 +77,7 @@ func requestData() {
   //filePath := "./hoge2.txt"
   filePath := "./test/alpine.img"
   file , err := os.Create(filePath)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   file.Write(rl.Payload)
 }
@@ -125,15 +113,11 @@ func importImg(imageName, fileName string) {
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   f, err := os.Open(fileName)
   defer f.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   opts := []containerd.ImportOpt{
     containerd.WithIndexName(imageName),
@@ -141,9 +125,7 @@ func importImg(imageName, fileName string) {
   }
 
   client.Import(ctx, f, opts...)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   fmt.Println("Imported")
 }
 
@@ -152,3 +134,8 @@ func install_microk8s() {
 
 func notify() {
 }
+
+func Error(error error) {
+  if error != nil {
+    fmt.Println(error)
+  }

@@ -47,18 +47,15 @@ func exportAllImg(){
 func server() {
   // Socket
   listen, err := net.Listen("tcp", "localhost:27001")
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   defer listen.Close()
 
   conn, err := listen.Accept()
   // Recieve Request from slave
   buf := make([]byte, cacis.CacisLayerSize)
   _, err = conn.Read(buf)
-  if err != nil {
-    fmt.Println(err)
-  }
+  Error(err)
+
   fmt.Println("Recieve Request")
   fmt.Println(buf)
   rl := cacis.Unmarshal(buf)
@@ -68,77 +65,55 @@ func server() {
 
   // Swtich Type
   if rl.Type == 1 {  // request Image
-    fmt.Println("Type = 1")
+    fmt.Println("Debug: Type = 1")
     // File
     //filePath := "./test/hoge2.txt"
     filePath := "./alpine.img"
     file, err := os.Open(filePath)
-    if err != nil {
-	    fmt.Println(err)
-    }
+    Error(err)
 
     fileInfo, err := file.Stat()
-    if err != nil {
-	    fmt.Println(err)
-    }
+    Error(err)
+
     fileBuf := make([]byte, fileInfo.Size())
     file.Read(fileBuf)
 
     // Notify Image Size
-    fmt.Println("Notify Image Size")
+    fmt.Println("Debug: Notify Image Size")
     nl := cacis.NotifyImageSize(fileBuf)
     msg_n := nl.Marshal()
     fmt.Println(msg_n)
     conn.Write(msg_n)
 
     // Send Image
-    fmt.Println("Send Image")
+    fmt.Println("Debug: Send Image")
     sl := cacis.SendImage(fileBuf)
     msg_s := sl.Marshal()
     fmt.Println(msg_s)
     conn.Write(msg_s)
 
-    conn.Close()
   } else {
-    fmt.Println("Unknown Type")
-    conn.Close()
+    fmt.Println("Err: Unknown Type")
   }
 
+  conn.Close()
 
   /*
-
-  // buffer
-  buf := make([]byte, fileInfo.Size())
-  if err != nil {
-    fmt.Println(err)
-    }
-
   // Wait
   conn, err := l.Accept()
   if err != nil {
     fmt.Println(err)
     }
-
-  //fmt.Println(buf)
-  file.Read(buf)
-  fmt.Println(buf)
-  //conn.Write(buf)
-  fmt.Println(string(buf))
   */
-
 }
 
 func sendData() {
   filePath := "./test/hoge1.txt"
   file, err := os.Open(filePath)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   fileInfo, err := file.Stat()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   buf := make([]byte, fileInfo.Size())
   fmt.Println(file.Read(buf))
@@ -155,15 +130,11 @@ func exportImg(fileName, imageName string){
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   f, err := os.Create(fileName)
   defer f.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   imageStore := client.ImageService()
   opts := []archive.ExportOpt{
@@ -172,9 +143,7 @@ func exportImg(fileName, imageName string){
   }
 
   client.Export(ctx, f, opts...)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
   fmt.Println("Exported")
 }
 
@@ -184,18 +153,14 @@ func pullImg(imageName string) {
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
   }
 
   contents, err := client.Fetch(ctx, imageName, opts...)
-  if err != nil {
-    fmt.Println(err)
-    }
+  Error(err)
 
   image := containerd.NewImageWithPlatform(client, contents, platforms.All)
   if image == nil {
@@ -211,4 +176,10 @@ func microk8s_enable() {
 }
 
 func notify() {
+}
+
+func Error(error error) {
+  if error != nil {
+    fmt.Println(error)
+  }
 }
