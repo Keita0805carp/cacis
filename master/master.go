@@ -2,6 +2,7 @@ package master
 
 import (
   "fmt"
+  "sort"
   //"io"
   "net"
   "os"
@@ -29,7 +30,7 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  exportAllImg()
+  //exportAllImg()
   server()
   //sendData()
 }
@@ -42,10 +43,11 @@ func server() {
   defer listen.Close()
 
   for {
-    fmt.Printf("Debug: Waiting slave for transfer images\n\n")
     conn, err := listen.Accept()
     Error(err)
+    fmt.Printf("Debug: Waiting slave\n\n")
     handling(conn)
+    conn.Close()
   }
 }
 
@@ -76,7 +78,6 @@ func handling(conn net.Conn) {
   } else {
     fmt.Println("Err: Unknown Type")
   }
-  conn.Close()
   /*
   // Wait
   conn, err := l.Accept()
@@ -133,7 +134,7 @@ func exportImg(filePath, imageRef string){
   fmt.Println("Exported")
 }
 
-func exportAllImg(){
+func exporAndPullAllImg(){
   fmt.Printf("Debug: Pull and Export Images\n\n")
   fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
   for exportFile, imageRef := range componentsList {
@@ -163,12 +164,15 @@ func sendComponentsList(conn net.Conn) {
   fmt.Println("Debug: Send Components List Packet to Slave.")
 }
 
+//////hogehoge
 func sendImg(conn net.Conn) {
-  for fileName, imageRef := range componentsList {
-    /// File
-    filePath := "./test/" + fileName
+  s := sortKeys(componentsList)
 
-    fmt.Printf("Debug: Read file '%s'(%s)\n", fileName, imageRef)
+  for _, fileName := range s {
+    /// File
+    filePath := exportDir + fileName
+
+    fmt.Printf("Debug: Read file '%s'\n", fileName)
     //filePath := "./test/hoge1.txt"
     file, err := os.Open(filePath)
     Error(err)
@@ -180,8 +184,9 @@ func sendImg(conn net.Conn) {
     /// Notify Image Size
     fmt.Println("Debug: Notify Image Size")
     cLayer := cacis.NotifyImageSize(fileBuf)
+    //fmt.Println(cLayer)
     packet := cLayer.Marshal()
-    //fmt.Println(packet)
+    fmt.Println(packet)
     conn.Write(packet)
     fmt.Println("Debug: Send Notify Packet to Slave.")
 
@@ -198,6 +203,22 @@ func sendImg(conn net.Conn) {
 func microk8s_enable(){
 }
 
+func sortKeys(m map[string]string) []string {
+  ///sort
+  sorted := make([]string, len(m))
+  index := 0
+  for key := range m {
+        sorted[index] = key
+        index++
+    }
+    sort.Strings(sorted)
+  /*
+  for _, exportFile := range exportFileNameSort {
+    fmt.Printf("%-20s : %s\n", exportFile, componentsList[exportFile])
+  }
+  */
+  return sorted
+}
 
 func Error(err error) {
   if err != nil {
