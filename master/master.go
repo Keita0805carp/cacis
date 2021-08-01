@@ -15,6 +15,7 @@ import (
   "github.com/containerd/containerd/images/archive"
 )
 
+const exportDir = "./master-vol/"
 
 var componentsList = map[string]string {
   "cni.img"             : "docker.io/calico/cni:v3.13.2",
@@ -28,22 +29,11 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  //exportAllImg()
+  exportAllImg()
   server()
   //sendData()
 }
 
-
-func exportAllImg(){
-  fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
-  for exportFile, imageRef := range componentsList {
-    fmt.Printf("%s : %s\n", "./output/" + exportFile, imageRef)
-    fmt.Println("start")
-    pullImg(imageRef)
-    exportImg("./output/" + exportFile, imageRef)
-    fmt.Println("end\n")
-  }
-}
 
 func server() {
   // Socket
@@ -51,8 +41,12 @@ func server() {
   Error(err)
   defer listen.Close()
 
-  conn, err := listen.Accept()
-  handling(conn)
+  for {
+    fmt.Printf("Debug: Waiting slave for transfer images\n\n")
+    conn, err := listen.Accept()
+    Error(err)
+    handling(conn)
+  }
 }
 
 func handling(conn net.Conn) {
@@ -69,58 +63,20 @@ func handling(conn net.Conn) {
   //fmt.Println(string(rl.Payload))
 
   /// Swtich Type
-  if cLayer.Type == 1 {  /// request Components List
-    fmt.Println("Debug: Type = 1")
-    /// Notify Image Size
-    fmt.Println("Debug: Notify Components List Size")
-    cLayer = cacis.NotifyComponentsListSize(componentsList)
-    packet := cLayer.Marshal()
-    //fmt.Println(packet)
-    conn.Write(packet)
-    fmt.Println("Debug: Send Notify Packet to Slave.")
+  if cLayer.Type == 01 {  /// request Components List
 
-    /// Send Image
-    fmt.Println("Debug: Send Components List")
-    cLayer = cacis.SendComponentsList(componentsList)
-    packet = cLayer.Marshal()
-    //fmt.Println(packet)
-    conn.Write(packet)
-    fmt.Println("Debug: Send Components List Packet to Slave.")
-  } else if cLayer.Type == 2 {  // request Image
-    fmt.Println("Debug: Type = 2")
+    fmt.Println("Debug: Type = 01")
+    sendComponentsList(conn)
 
-    /// File
-    filePath := "./test/hoge1.txt"
-    //filePath := "./alpine.img"
-    file, err := os.Open(filePath)
-    Error(err)
-    fileInfo, err := file.Stat()
-    Error(err)
-    fileBuf := make([]byte, fileInfo.Size())
-    file.Read(fileBuf)
+  } else if cLayer.Type == 02 {  /// request Image
 
-    /// Notify Image Size
-    fmt.Println("Debug: Notify Image Size")
-    cLayer = cacis.NotifyImageSize(fileBuf)
-    packet := cLayer.Marshal()
-    //fmt.Println(packet)
-    conn.Write(packet)
-    fmt.Println("Debug: Send Notify Packet to Slave.")
-
-    /// Send Image
-    fmt.Println("Debug: Send Image")
-    cLayer = cacis.SendImage(fileBuf)
-    packet = cLayer.Marshal()
-    //fmt.Println(packet)
-    conn.Write(packet)
-    fmt.Println("Debug: Send Image Packet to Slave.")
+    fmt.Println("Debug: Type = 02")
+    sendImg(conn)
 
   } else {
     fmt.Println("Err: Unknown Type")
   }
-
   conn.Close()
-
   /*
   // Wait
   conn, err := l.Accept()
@@ -128,46 +84,6 @@ func handling(conn net.Conn) {
     fmt.Println(err)
     }
   */
-}
-
-func sendData() {
-  filePath := "./test/hoge1.txt"
-  file, err := os.Open(filePath)
-  Error(err)
-
-  fileInfo, err := file.Stat()
-  Error(err)
-
-  buf := make([]byte, fileInfo.Size())
-  fmt.Println(file.Read(buf))
-  fmt.Println(buf)
-  fmt.Println(string(buf))
-  fmt.Println(fileInfo)
-  fmt.Println(fileInfo.Name())
-  fmt.Println(fileInfo.Size())
-}
-
-func exportImg(fileName, imageName string){
-  fmt.Println("Exporting " + imageName + " to " + fileName + "...")
-
-  ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
-  defer client.Close()
-  Error(err)
-
-  f, err := os.Create(fileName)
-  defer f.Close()
-  Error(err)
-
-  imageStore := client.ImageService()
-  opts := []archive.ExportOpt{
-    archive.WithImage(imageStore, imageName),
-    archive.WithAllPlatforms(),
-  }
-
-  client.Export(ctx, f, opts...)
-  Error(err)
-  fmt.Println("Exported")
 }
 
 func pullImg(imageName string) {
@@ -194,12 +110,94 @@ func pullImg(imageName string) {
   fmt.Println("Pulled")
 }
 
+func exportImg(filePath, imageRef string){
+  fmt.Printf("Exporting  %s to %s ...\n", imageRef, filePath)
 
-func microk8s_enable() {
+  ctx := context.Background()
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  defer client.Close()
+  Error(err)
+
+  f, err := os.Create(filePath)
+  defer f.Close()
+  Error(err)
+
+  imageStore := client.ImageService()
+  opts := []archive.ExportOpt{
+    archive.WithImage(imageStore, imageRef),
+    archive.WithAllPlatforms(),
+  }
+
+  client.Export(ctx, f, opts...)
+  Error(err)
+  fmt.Println("Exported")
 }
 
-func notify() {
+func exportAllImg(){
+  fmt.Printf("Debug: Pull and Export Images\n\n")
+  fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
+  for exportFile, imageRef := range componentsList {
+    fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
+    fmt.Println("start")
+    pullImg(imageRef)
+    exportImg(exportDir + exportFile, imageRef)
+    fmt.Println("end\n")
+  }
 }
+
+func sendComponentsList(conn net.Conn) {
+  /// Notify Componentes List Size
+  fmt.Println("Debug: Notify Components List Size")
+  cLayer := cacis.NotifyComponentsListSize(componentsList)
+  packet := cLayer.Marshal()
+  //fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Debug: Send Notify Packet to Slave.")
+
+  /// Send Components List
+  fmt.Println("Debug: Send Components List")
+  cLayer = cacis.SendComponentsList(componentsList)
+  packet = cLayer.Marshal()
+  //fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Debug: Send Components List Packet to Slave.")
+}
+
+func sendImg(conn net.Conn) {
+  for fileName, imageRef := range componentsList {
+    /// File
+    filePath := "./test/" + fileName
+
+    fmt.Printf("Debug: Read file '%s'(%s)\n", fileName, imageRef)
+    //filePath := "./test/hoge1.txt"
+    file, err := os.Open(filePath)
+    Error(err)
+    fileInfo, err := file.Stat()
+    Error(err)
+    fileBuf := make([]byte, fileInfo.Size())
+    file.Read(fileBuf)
+
+    /// Notify Image Size
+    fmt.Println("Debug: Notify Image Size")
+    cLayer := cacis.NotifyImageSize(fileBuf)
+    packet := cLayer.Marshal()
+    //fmt.Println(packet)
+    conn.Write(packet)
+    fmt.Println("Debug: Send Notify Packet to Slave.")
+
+    /// Send Image
+    fmt.Println("Debug: Send Image")
+    cLayer = cacis.SendImage(fileBuf)
+    packet = cLayer.Marshal()
+    //fmt.Println(packet)
+    conn.Write(packet)
+    fmt.Println("Debug: Send Image Packet to Slave.")
+  }
+}
+
+func microk8s_enable(){
+}
+
 
 func Error(err error) {
   if err != nil {

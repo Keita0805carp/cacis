@@ -40,11 +40,11 @@ func NewCacisPacket(cacisType uint8, l uint64, p []byte) CacisLayer {
 
 // Request
 func RequestComponentsList() CacisLayer {
-  return NewCacisPacket(1, 0, nil)
+  return NewCacisPacket(01, 0, nil)
 }
 
 func RequestImage() CacisLayer {
-  return NewCacisPacket(2, 0, nil)
+  return NewCacisPacket(02, 0, nil)
 }
 
 // Notify
