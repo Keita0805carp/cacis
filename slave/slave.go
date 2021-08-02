@@ -84,10 +84,10 @@ func recieveComponentsList() map[string]string {
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
     fmt.Printf("\rDebug: recieving...")
-    fmt.Printf("\rComplete %d of %d", len(packet), int(targetBytes))
+    fmt.Printf("\rCompleted  %d  of %d", len(packet), int(targetBytes))
   }
   cLayer.Payload = packet
-  fmt.Printf("\rCompleted %d\n", len(cLayer.Payload))
+  fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
 
   var tmp map[string]string
   err = json.Unmarshal(cLayer.Payload, &tmp)
@@ -123,7 +123,7 @@ func recieveImg(s []string) {
     cLayer = cacis.Unmarshal(packet)
 
     // Recieve Packet PAYLOAD
-    fmt.Println("Debug: Recieve CacisLayer PAYLOAD")
+    fmt.Println("Debug: Read Packet PAYLOAD")
     packet = []byte{}
     recievedBytes := 0
     targetBytes := cLayer.Length
@@ -135,16 +135,16 @@ func recieveImg(s []string) {
       recievedBytes += packetLength
       packet = append(packet, buf[:packetLength]...)
       fmt.Printf("\rDebug: recieving...")
-      fmt.Printf("\rComplete %d of %d", len(packet), int(targetBytes))
+      fmt.Printf("\rComplete %d  of %d", len(packet), int(targetBytes))
     }
     cLayer.Payload = packet
-    fmt.Printf("\rCompleted %d\n", len(cLayer.Payload))
+    fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
     //fmt.Println("Debug:!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     //cLayer.Payload = packet
     //fmt.Println(cLayer[:10])
     //fmt.Println(string(cLayer.Payload))
 
-    fmt.Printf("Debug: Write file '%s'\n", fileName)
+    fmt.Printf("\nDebug: Write file '%s'\n", fileName)
     // File
     filePath := importDir + fileName
     //filePath := "./hoge1.txt"

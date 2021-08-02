@@ -42,9 +42,9 @@ func server() {
   defer listen.Close()
 
   for {
+    fmt.Printf("Debug: Waiting slave\n\n")
     conn, err := listen.Accept()
     Error(err)
-    fmt.Printf("Debug: Waiting slave\n\n")
     handling(conn)
     conn.Close()
   }
@@ -80,7 +80,7 @@ func handling(conn net.Conn) {
 }
 
 func pullImg(imageName string) {
-  fmt.Println("Pulling " + imageName + " ...")
+  fmt.Printf("\nPulling   %s ...", imageName)
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
@@ -100,11 +100,11 @@ func pullImg(imageName string) {
     }
   // fmt.Print("Debug: image= ")
   // fmt.Println(image)
-  fmt.Println("Pulled")
+  fmt.Printf("\rPulled    %s Completely\n", imageName)
 }
 
 func exportImg(filePath, imageRef string){
-  fmt.Printf("Exporting  %s to %s ...\n", imageRef, filePath)
+  fmt.Printf("\rExporting %s to %s ...", imageRef, filePath)
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
@@ -123,42 +123,40 @@ func exportImg(filePath, imageRef string){
 
   client.Export(ctx, f, opts...)
   Error(err)
-  fmt.Println("Exported")
+  fmt.Printf("\rExported  %s to %s Completely\n", imageRef, filePath)
 }
 
 func exportAndPullAllImg(){
   fmt.Printf("Debug: [start] Pull and Export Images\n")
-  fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
+  fmt.Printf("\nPull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
-    fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
-    fmt.Println("start")
+    //fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
     pullImg(imageRef)
     exportImg(exportDir + exportFile, imageRef)
-    fmt.Println("end\n")
   }
-  fmt.Printf("Debug: [end] Pull and Export Images\n")
+  fmt.Printf("\nDebug: [end] Pull and Export Images\n\n")
 }
 
 func sendComponentsList(conn net.Conn) {
   /// Send Components List
-  fmt.Println("Debug: [start] Send Components List")
+  fmt.Printf("\nDebug: [start] Send Components List\n")
   cLayer := cacis.SendComponentsList(componentsList)
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Debug: [end] Send Components List")
+  fmt.Print("\nDebug: [end] Send Components List\n")
 }
 
 //////hogehoge
 func sendImg(conn net.Conn) {
-  fmt.Println("Debug: [start] Send Components Images")
+  fmt.Print("\nDebug: [start] Send Components Images\n")
   s := sortKeys(componentsList)
 
   for _, fileName := range s {
     /// File
     filePath := exportDir + fileName
 
-    fmt.Printf("Debug: Read file '%s'\n", fileName)
+    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
     //filePath := "./test/hoge1.txt"
     file, err := os.Open(filePath)
     Error(err)
@@ -168,15 +166,15 @@ func sendImg(conn net.Conn) {
     file.Read(fileBuf)
 
     /// Send Image
-    fmt.Println("Debug: Send Image")
+    fmt.Printf("\rDebug: Sending Image %s ...", fileName)
     cLayer := cacis.SendImage(fileBuf)
     packet := cLayer.Marshal()
     //fmt.Println("Debug: !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     //fmt.Println(cLayer)
     conn.Write(packet)
-    fmt.Println("Debug: Send Image Packet to Slave.")
+    fmt.Printf("\rDebug: Send Image %s Completely\n", fileName)
   }
-  fmt.Println("Debug: [end] Send Components Images")
+  fmt.Printf("\nDebug: [end] Send Components Images\n")
 }
 
 func microk8s_enable(){

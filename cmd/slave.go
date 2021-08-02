@@ -21,7 +21,7 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 }
 
 func slaveAction() (err error) {
-    fmt.Println("This is slave subcommand\n")
+    fmt.Println("Debug: This is slave subcommand\n")
     slave.Main()
     return nil
 }
