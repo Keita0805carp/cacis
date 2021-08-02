@@ -19,20 +19,17 @@ import (
 
 const (
   MASTER = "localhost:27001"
+  //importDir = "./master-vol/"
   importDir = "./slave-vol/"
 )
 
 func Main() {
-  //importAllImg()
   slave()
 }
 
 func slave() {
-  // Socket
-  conn, err := net.Dial("tcp", MASTER)
-  Error(err)
-  defer conn.Close()
-
+  componentsList := recieveComponentsList()
+  //fmt.Println(componentsList)
   // componentsList := map[string]string {
   //   "cni.img"             : "docker.io/calico/cni:v3.13.2",
   //   "pause.img"           : "k8s.gcr.io/pause:3.1",
@@ -43,21 +40,17 @@ func slave() {
   //   "metrics-server.img"  : "k8s.gcr.io/metrics-server-arm64:v0.3.6",
   //   "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
   // }
-  // Socket
-  componentsList := recieveComponentsList(conn)
+  sortedExportFileName := sortKeys(componentsList)
+  recieveImg(sortedExportFileName)
+  importAllImg(componentsList)
+}
 
-  conn, err = net.Dial("tcp", MASTER)
+func recieveComponentsList() map[string]string {
+  // Socket
+  conn, err := net.Dial("tcp", MASTER)
   Error(err)
   defer conn.Close()
 
-  //fmt.Println(componentsList)
-  sortedExportFileName := sortKeys(componentsList)
-  recieveImages(conn, sortedExportFileName)
-  // Request Image
-  //fmt.Println(sortedExportFileName)
-}
-
-func recieveComponentsList(conn net.Conn) map[string]string {
   // Request Image
   fmt.Println("Debug: Create Request Packet")
   cLayer := cacis.RequestComponentsList()
@@ -67,28 +60,38 @@ func recieveComponentsList(conn net.Conn) map[string]string {
   fmt.Println("Send\n\n")
 
 
-  // Recieve Components List Size Notification
-  fmt.Println("Debug: Components List Size Notification")
+  // Recieve Packet HEAD
+  fmt.Println("Debug: Recieve Packet HEAD")
   packet = make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(packet)
   Error(err)
-  fmt.Printf("Debug: Notifying Packet from Master. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   //fmt.Println(cLayer)
   //fmt.Println(string(cLayer.Payload))
 
-  // Recieve Components List
-  fmt.Println("Debug: Recieve Components List")
-  fmt.Println(cLayer)
-  packet = make([]byte, cacis.CacisLayerSize + cLayer.Length)
-  packetLength, err = conn.Read(packet)
-  Error(err)
-  fmt.Printf("Debug: Image Packet from Master. len: %d\n", packetLength)
-  cLayer = cacis.Unmarshal(packet)
+  // Recieve Packet PAYLOAD
+  fmt.Println("Debug: Recieve Packet PAYLOAD")
   //fmt.Println(cLayer)
+  packet = []byte{}
+  recievedBytes := 0
+  targetBytes := cLayer.Length
+
+  for {
+    buf := make([]byte, targetBytes - uint64(recievedBytes))
+    packetLength, err = conn.Read(buf)
+    Error(err)
+    recievedBytes += packetLength
+    packet = append(packet, buf[:packetLength]...)
+    fmt.Println("Debug: recieving...")
+    fmt.Printf("Complete %d of %d\n", len(packet), int(targetBytes))
+    if len(packet) == int(targetBytes) {
+      break
+    }
+  }
+  //cLayer.Payload = packet
 
   var tmp map[string]string
-  err = json.Unmarshal((cLayer.Payload), &tmp)
+  err = json.Unmarshal(packet, &tmp)
   Error(err)
 
   /// Debug
@@ -99,7 +102,12 @@ func recieveComponentsList(conn net.Conn) map[string]string {
 }
 
 /////hogehoge
-func recieveImages(conn net.Conn, s []string) {
+func recieveImg(s []string) {
+  // Socket
+  conn, err := net.Dial("tcp", MASTER)
+  Error(err)
+  defer conn.Close()
+
   // Request Image
   fmt.Println("Debug: Create Request Packet")
   cLayer := cacis.RequestImage()
@@ -110,41 +118,40 @@ func recieveImages(conn net.Conn, s []string) {
 
   for _, fileName := range s {
     fmt.Printf("Debug: Recieve file '%s'\n", fileName)
-    // Recieve Image Size Notification
-    fmt.Println("Debug: Image Size Notification")
+    // Recieve Packet HEAD
     packet := make([]byte, cacis.CacisLayerSize)
     packetLength, err := conn.Read(packet)
     Error(err)
-    fmt.Printf("Debug: Notifying Packet from Master. len: %d\n", packetLength)
-    fmt.Println(packet)
+    fmt.Printf("Debug: Recieve only CacisLayer HEAD. len: %d", packetLength)
+    //fmt.Println(packet)
     cLayer = cacis.Unmarshal(packet)
     //fmt.Println(cLayer)
     //fmt.Println(string(cLayer.Payload))
 
-    // Recieve Image
-    fmt.Println("Debug: Recieve Image")
-    fmt.Println(cLayer.Length)
-    fmt.Printf("Debug: makeslice len: %d\n", cacis.CacisLayerSize + cLayer.Length)
-    packet = make([]byte, cacis.CacisLayerSize + cLayer.Length)
-    recievedBytes := uint64(0)
-    targetBytes := cacis.CacisLayerSize + cLayer.Length
+    // Recieve Packet PAYLOAD
+    fmt.Println("Debug: Recieve CacisLayer PAYLOAD")
+    //fmt.Println(cLayer.Length)
+    packet = []byte{}
+    recievedBytes := 0
+    targetBytes := cLayer.Length
 
     for {
-      buf := make([]byte, targetBytes - recievedBytes)
+      buf := make([]byte, targetBytes - uint64(recievedBytes))
       packetLength, err = conn.Read(buf)
       Error(err)
-      recievedBytes += uint64(packetLength)
-      _ = append(packet, buf...)
+      recievedBytes += packetLength
+      packet = append(packet, buf[:packetLength]...)
       fmt.Println("Debug: recieving...")
-      fmt.Printf("Complete %d of %d\n", len(buf), len(packet))
-      if len(buf) == 0 {
+      fmt.Printf("Complete %d of %d\n", len(packet), targetBytes)
+      if len(packet) == int(targetBytes) {
         break
       }
     }
 
     fmt.Printf("Debug: Image Packet from Master. len: %d\n", len(packet))
-    cLayer = cacis.Unmarshal(packet)
-    //fmt.Println(cLayer)
+    //fmt.Println("Debug:!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    //cLayer.Payload = packet
+    //fmt.Println(cLayer[:10])
     //fmt.Println(string(cLayer.Payload))
 
     fmt.Printf("Debug: Write file '%s'\n", fileName)
@@ -154,19 +161,19 @@ func recieveImages(conn net.Conn, s []string) {
     file , err := os.Create(filePath)
     Error(err)
 
-    file.Write(cLayer.Payload)
+    file.Write(packet)
   }
 }
 
-func importImg(imageName, fileName string) {
-  fmt.Println("Importing " + imageName + " from " + fileName + "...")
+func importImg(imageName, filePath string) {
+  fmt.Println("Importing " + imageName + " from " + filePath + "...")
 
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
   Error(err)
 
-  f, err := os.Open(fileName)
+  f, err := os.Open(filePath)
   defer f.Close()
   Error(err)
 
@@ -180,12 +187,12 @@ func importImg(imageName, fileName string) {
   fmt.Println("Imported")
 }
 
-func importAllImg(componentsList map[string]string) {
-  fmt.Printf("Import %d images for Kubernetes Components", len(componentsList))
-  for file, imageRef := range componentsList {
-    fmt.Printf("%s : %s\n", importDir + file, imageRef)
+func importAllImg(m map[string]string) {
+  fmt.Printf("Import %d images for Kubernetes Components", len(m))
+  for importFile, imageRef := range m {
+    fmt.Printf("%s : %s\n", importDir + importFile, imageRef)
     fmt.Println("start")
-    importImg(imageRef, importDir + file)
+    importImg(imageRef, importDir + importFile)
     fmt.Println("end\n")
     }
 }

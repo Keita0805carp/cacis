@@ -30,9 +30,8 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  //exportAllImg()
+  //exportAndPullAllImg()
   server()
-  //sendData()
 }
 
 
@@ -78,13 +77,6 @@ func handling(conn net.Conn) {
   } else {
     fmt.Println("Err: Unknown Type")
   }
-  /*
-  // Wait
-  conn, err := l.Accept()
-  if err != nil {
-    fmt.Println(err)
-    }
-  */
 }
 
 func pullImg(imageName string) {
@@ -134,7 +126,7 @@ func exportImg(filePath, imageRef string){
   fmt.Println("Exported")
 }
 
-func exporAndPullAllImg(){
+func exportAndPullAllImg(){
   fmt.Printf("Debug: Pull and Export Images\n\n")
   fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
   for exportFile, imageRef := range componentsList {
@@ -147,18 +139,10 @@ func exporAndPullAllImg(){
 }
 
 func sendComponentsList(conn net.Conn) {
-  /// Notify Componentes List Size
-  fmt.Println("Debug: Notify Components List Size")
-  cLayer := cacis.NotifyComponentsListSize(componentsList)
-  packet := cLayer.Marshal()
-  //fmt.Println(packet)
-  conn.Write(packet)
-  fmt.Println("Debug: Send Notify Packet to Slave.")
-
   /// Send Components List
   fmt.Println("Debug: Send Components List")
-  cLayer = cacis.SendComponentsList(componentsList)
-  packet = cLayer.Marshal()
+  cLayer := cacis.SendComponentsList(componentsList)
+  packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
   fmt.Println("Debug: Send Components List Packet to Slave.")
@@ -181,20 +165,12 @@ func sendImg(conn net.Conn) {
     fileBuf := make([]byte, fileInfo.Size())
     file.Read(fileBuf)
 
-    /// Notify Image Size
-    fmt.Println("Debug: Notify Image Size")
-    cLayer := cacis.NotifyImageSize(fileBuf)
-    //fmt.Println(cLayer)
-    packet := cLayer.Marshal()
-    fmt.Println(packet)
-    conn.Write(packet)
-    fmt.Println("Debug: Send Notify Packet to Slave.")
-
     /// Send Image
     fmt.Println("Debug: Send Image")
-    cLayer = cacis.SendImage(fileBuf)
-    packet = cLayer.Marshal()
-    //fmt.Println(packet)
+    cLayer := cacis.SendImage(fileBuf)
+    packet := cLayer.Marshal()
+    //fmt.Println("Debug: !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    //fmt.Println(cLayer)
     conn.Write(packet)
     fmt.Println("Debug: Send Image Packet to Slave.")
   }
