@@ -30,7 +30,7 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  //exportAndPullAllImg()
+  exportAndPullAllImg()
   server()
 }
 
@@ -64,14 +64,14 @@ func handling(conn net.Conn) {
   //fmt.Println(string(rl.Payload))
 
   /// Swtich Type
-  if cLayer.Type == 01 {  /// request Components List
+  if cLayer.Type == 10 {  /// request Components List
 
-    fmt.Println("Debug: Type = 01")
+    fmt.Println("Debug: Type = 10")
     sendComponentsList(conn)
 
-  } else if cLayer.Type == 02 {  /// request Image
+  } else if cLayer.Type == 20 {  /// request Image
 
-    fmt.Println("Debug: Type = 02")
+    fmt.Println("Debug: Type = 20")
     sendImg(conn)
 
   } else {
@@ -127,7 +127,7 @@ func exportImg(filePath, imageRef string){
 }
 
 func exportAndPullAllImg(){
-  fmt.Printf("Debug: Pull and Export Images\n\n")
+  fmt.Printf("Debug: [start] Pull and Export Images\n")
   fmt.Printf("Pull %d images for Kubernetes Components", len(componentsList))
   for exportFile, imageRef := range componentsList {
     fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
@@ -136,20 +136,22 @@ func exportAndPullAllImg(){
     exportImg(exportDir + exportFile, imageRef)
     fmt.Println("end\n")
   }
+  fmt.Printf("Debug: [end] Pull and Export Images\n")
 }
 
 func sendComponentsList(conn net.Conn) {
   /// Send Components List
-  fmt.Println("Debug: Send Components List")
+  fmt.Println("Debug: [start] Send Components List")
   cLayer := cacis.SendComponentsList(componentsList)
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Debug: Send Components List Packet to Slave.")
+  fmt.Println("Debug: [end] Send Components List")
 }
 
 //////hogehoge
 func sendImg(conn net.Conn) {
+  fmt.Println("Debug: [start] Send Components Images")
   s := sortKeys(componentsList)
 
   for _, fileName := range s {
@@ -174,6 +176,7 @@ func sendImg(conn net.Conn) {
     conn.Write(packet)
     fmt.Println("Debug: Send Image Packet to Slave.")
   }
+  fmt.Println("Debug: [end] Send Components Images")
 }
 
 func microk8s_enable(){

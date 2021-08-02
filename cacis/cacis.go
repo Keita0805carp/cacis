@@ -25,7 +25,7 @@ func (c *CacisLayer) Marshal() []byte {
 func Unmarshal(buf []byte) CacisLayer {
   var c CacisLayer
   c.Type   = uint8(buf[0])
-  c.Length = binary.BigEndian.Uint64(buf[1:9])
+  c.Length = binary.BigEndian.Uint64(buf[1:])
   c.Payload = buf[9:]
   return c
 }
@@ -40,33 +40,22 @@ func NewCacisPacket(cacisType uint8, l uint64, p []byte) CacisLayer {
 
 // Request
 func RequestComponentsList() CacisLayer {
-  return NewCacisPacket(01, 0, nil)
+  return NewCacisPacket(10, 0, nil)
 }
 
 func RequestImage() CacisLayer {
-  return NewCacisPacket(02, 0, nil)
-}
-
-// Notify
-func NotifyComponentsListSize(list map[string]string) CacisLayer {
-  p, err := json.Marshal(list)
-  Error(err)
-  return NewCacisPacket(11, uint64(len(p)), nil)
-}
-
-func NotifyImageSize(p []byte) CacisLayer {
-  return NewCacisPacket(12, uint64(len(p)), nil)
+  return NewCacisPacket(20, 0, nil)
 }
 
 // Send
 func SendComponentsList(list map[string]string) CacisLayer {
   p, err := json.Marshal(list)
   Error(err)
-  return NewCacisPacket(21, uint64(len(p)), p)
+  return NewCacisPacket(11, uint64(len(p)), p)
 }
 
 func SendImage(p []byte) CacisLayer {
-  return NewCacisPacket(22, uint64(len(p)), p)
+  return NewCacisPacket(21, uint64(len(p)), p)
 }
 
 

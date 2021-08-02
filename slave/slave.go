@@ -19,7 +19,6 @@ import (
 
 const (
   MASTER = "localhost:27001"
-  //importDir = "./master-vol/"
   importDir = "./slave-vol/"
 )
 
@@ -42,79 +41,76 @@ func slave() {
   // }
   sortedExportFileName := sortKeys(componentsList)
   recieveImg(sortedExportFileName)
-  importAllImg(componentsList)
+  //importAllImg(componentsList)
 }
 
 func recieveComponentsList() map[string]string {
+  fmt.Println("Debug: [start] RECIEVE COMPONENTS LIST")
   // Socket
   conn, err := net.Dial("tcp", MASTER)
   Error(err)
   defer conn.Close()
 
   // Request Image
-  fmt.Println("Debug: Create Request Packet")
+  fmt.Println("Debug: Request Components List")
   cLayer := cacis.RequestComponentsList()
   packet := cLayer.Marshal()
   fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Send\n\n")
+  fmt.Println("Requested\n\n")
 
 
   // Recieve Packet HEAD
-  fmt.Println("Debug: Recieve Packet HEAD")
+  fmt.Println("Debug: Recieve Packet")
   packet = make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(packet)
   Error(err)
+  fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   //fmt.Println(cLayer)
   //fmt.Println(string(cLayer.Payload))
 
   // Recieve Packet PAYLOAD
-  fmt.Println("Debug: Recieve Packet PAYLOAD")
+  fmt.Println("Debug: Read Packet PAYLOAD")
   //fmt.Println(cLayer)
   packet = []byte{}
   recievedBytes := 0
   targetBytes := cLayer.Length
 
-  for {
+  for len(packet) < int(targetBytes){
     buf := make([]byte, targetBytes - uint64(recievedBytes))
     packetLength, err = conn.Read(buf)
     Error(err)
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
-    fmt.Println("Debug: recieving...")
-    fmt.Printf("Complete %d of %d\n", len(packet), int(targetBytes))
-    if len(packet) == int(targetBytes) {
-      break
-    }
+    fmt.Printf("\rDebug: recieving...")
+    fmt.Printf("\rComplete %d of %d", len(packet), int(targetBytes))
   }
-  //cLayer.Payload = packet
+  cLayer.Payload = packet
+  fmt.Printf("\rCompleted %d\n", len(cLayer.Payload))
 
   var tmp map[string]string
-  err = json.Unmarshal(packet, &tmp)
+  err = json.Unmarshal(cLayer.Payload, &tmp)
   Error(err)
 
-  /// Debug
-  // for exportFile, imageRef := range tmp {
-  //   fmt.Printf("%-20s : %s\n", exportFile, imageRef)
-  // }
+  fmt.Println("Debug: [end] RECIEVE COMPONENTS LIST")
   return tmp
 }
 
-/////hogehoge
 func recieveImg(s []string) {
+  fmt.Println("Debug: [start] RECIEVE COMPONENT IMAGES")
   // Socket
   conn, err := net.Dial("tcp", MASTER)
   Error(err)
   defer conn.Close()
 
   // Request Image
-  fmt.Println("Debug: Create Request Packet")
+  fmt.Println("Debug: Request Components Image")
   cLayer := cacis.RequestImage()
   packet := cLayer.Marshal()
   fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Send\n\n")
+  fmt.Println("Requested\n\n")
 
   for _, fileName := range s {
     fmt.Printf("Debug: Recieve file '%s'\n", fileName)
@@ -122,33 +118,27 @@ func recieveImg(s []string) {
     packet := make([]byte, cacis.CacisLayerSize)
     packetLength, err := conn.Read(packet)
     Error(err)
-    fmt.Printf("Debug: Recieve only CacisLayer HEAD. len: %d", packetLength)
-    //fmt.Println(packet)
+    fmt.Println("Debug: Recieve Packet")
+    fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
     cLayer = cacis.Unmarshal(packet)
-    //fmt.Println(cLayer)
-    //fmt.Println(string(cLayer.Payload))
 
     // Recieve Packet PAYLOAD
     fmt.Println("Debug: Recieve CacisLayer PAYLOAD")
-    //fmt.Println(cLayer.Length)
     packet = []byte{}
     recievedBytes := 0
     targetBytes := cLayer.Length
 
-    for {
+    for len(packet) < int(targetBytes) {
       buf := make([]byte, targetBytes - uint64(recievedBytes))
       packetLength, err = conn.Read(buf)
       Error(err)
       recievedBytes += packetLength
       packet = append(packet, buf[:packetLength]...)
-      fmt.Println("Debug: recieving...")
-      fmt.Printf("Complete %d of %d\n", len(packet), targetBytes)
-      if len(packet) == int(targetBytes) {
-        break
-      }
+      fmt.Printf("\rDebug: recieving...")
+      fmt.Printf("\rComplete %d of %d", len(packet), int(targetBytes))
     }
-
-    fmt.Printf("Debug: Image Packet from Master. len: %d\n", len(packet))
+    cLayer.Payload = packet
+    fmt.Printf("\rCompleted %d\n", len(cLayer.Payload))
     //fmt.Println("Debug:!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     //cLayer.Payload = packet
     //fmt.Println(cLayer[:10])
@@ -161,8 +151,9 @@ func recieveImg(s []string) {
     file , err := os.Create(filePath)
     Error(err)
 
-    file.Write(packet)
+    file.Write(cLayer.Payload)
   }
+  fmt.Println("Debug: [end] RECIEVE COMPONENT IMAGES")
 }
 
 func importImg(imageName, filePath string) {
