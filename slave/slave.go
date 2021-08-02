@@ -73,20 +73,8 @@ func recieveComponentsList() map[string]string {
   // Recieve Packet PAYLOAD
   fmt.Println("Debug: Read Packet PAYLOAD")
   //fmt.Println(cLayer)
-  packet = []byte{}
-  recievedBytes := 0
-  targetBytes := cLayer.Length
+  cLayer.Payload = loadPayload(conn, cLayer.Length)
 
-  for len(packet) < int(targetBytes){
-    buf := make([]byte, targetBytes - uint64(recievedBytes))
-    packetLength, err = conn.Read(buf)
-    Error(err)
-    recievedBytes += packetLength
-    packet = append(packet, buf[:packetLength]...)
-    fmt.Printf("\rDebug: recieving...")
-    fmt.Printf("\rCompleted  %d  of %d", len(packet), int(targetBytes))
-  }
-  cLayer.Payload = packet
   fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
 
   var tmp map[string]string
@@ -124,27 +112,16 @@ func recieveImg(s []string) {
 
     // Recieve Packet PAYLOAD
     fmt.Println("Debug: Read Packet PAYLOAD")
-    packet = []byte{}
-    recievedBytes := 0
-    targetBytes := cLayer.Length
-
-    for len(packet) < int(targetBytes) {
-      buf := make([]byte, targetBytes - uint64(recievedBytes))
-      packetLength, err = conn.Read(buf)
-      Error(err)
-      recievedBytes += packetLength
-      packet = append(packet, buf[:packetLength]...)
-      fmt.Printf("\rDebug: recieving...")
-      fmt.Printf("\rComplete %d  of %d", len(packet), int(targetBytes))
-    }
     cLayer.Payload = packet
+
+    cLayer.Payload = loadPayload(conn, cLayer.Length)
     fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
     //fmt.Println("Debug:!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     //cLayer.Payload = packet
     //fmt.Println(cLayer[:10])
     //fmt.Println(string(cLayer.Payload))
 
-    fmt.Printf("\nDebug: Write file '%s'\n", fileName)
+    fmt.Printf("Debug: Write file '%s'\n\n", fileName)
     // File
     filePath := importDir + fileName
     //filePath := "./hoge1.txt"
@@ -189,6 +166,22 @@ func importAllImg(m map[string]string) {
 }
 
 func install_microk8s() {
+}
+
+func loadPayload(conn net.Conn, targetBytes uint64) []byte {
+  packet := []byte{}
+  recievedBytes := 0
+
+  for len(packet) < int(targetBytes){
+    buf := make([]byte, targetBytes - uint64(recievedBytes))
+    packetLength, err := conn.Read(buf)
+    Error(err)
+    recievedBytes += packetLength
+    packet = append(packet, buf[:packetLength]...)
+    fmt.Printf("\rDebug: recieving...")
+    fmt.Printf("\rCompleted  %d  of %d", len(packet), int(targetBytes))
+  }
+  return packet
 }
 
 func sortKeys(m map[string]string) []string {
