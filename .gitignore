@@ -1,3 +1,6 @@
 go.sum
 test/
 *.img
+snapd/
+master-vol/
+slave-vol/

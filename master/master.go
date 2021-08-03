@@ -5,7 +5,10 @@ import (
   "sort"
   "net"
   "os"
+  "os/exec"
+  "regexp"
   "context"
+  "strings"
 
   "github.com/keita0805carp/cacis/cacis"
 
@@ -14,7 +17,6 @@ import (
   "github.com/containerd/containerd/images/archive"
 )
 
-const exportDir = "./master-vol/"
 const (
   exportDir = "./master-vol/"
   //containerdSock = "/run/containerd/containerd.sock"
@@ -34,8 +36,11 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  exportAndPullAllImg()
-  server()
+  // exportAndPullAllImg()
+  //server()
+  ///setupMicrok8s()
+  //enableMicrok8s()
+  clustering()
 }
 
 
@@ -75,6 +80,21 @@ func handling(conn net.Conn) {
 
     fmt.Println("Debug: Type = 20")
     sendImg(conn)
+
+  } else if cLayer.Type == 30 {  /// request microk8s snap
+
+    fmt.Println("Debug: Type = 30")
+    sendMicrok8sSnap(conn)
+
+  } else if cLayer.Type == 40 {  /// request snapd
+
+    fmt.Println("Debug: Type = 40")
+    sendSnapd(conn)
+
+  } else if cLayer.Type == 50 {  /// request snapd
+
+    fmt.Println("Debug: Type = 50")
+    clustering()
 
   } else {
     fmt.Println("Err: Unknown Type")
@@ -175,7 +195,103 @@ func sendImg(conn net.Conn) {
   fmt.Printf("\nDebug: [end] Send Components Images\n")
 }
 
-func microk8s_enable(){
+func snapd() {
+  //TODO snapd check
+  //TODO snapd install
+}
+
+func sendSnapd(conn net.Conn) {
+  fmt.Print("\nDebug: [start] Send Snapd\n")
+  s := []string{"snapd.zip"}
+
+  for _, fileName := range s {
+    /// File
+    filePath := exportDir + fileName
+
+    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
+    //filePath := "./test/hoge1.txt"
+    file, err := os.Open(filePath)
+    Error(err)
+    fileInfo, err := file.Stat()
+    Error(err)
+    fileBuf := make([]byte, fileInfo.Size())
+    file.Read(fileBuf)
+
+    /// Send Image
+    fmt.Printf("\rDebug: Sending Snapd %s ...", fileName)
+    cLayer := cacis.SendSnapd(fileBuf)
+    packet := cLayer.Marshal()
+    //fmt.Println(cLayer)
+    conn.Write(packet)
+    fmt.Printf("\rDebug: Send Snapd %s Completely\n", fileName)
+  }
+  fmt.Printf("\nDebug: [end] Send Snapd\n")
+}
+
+func downloadMicrok8s() {
+  //TODO microk8s check
+  //TODO snap install microk8s --classic
+  fmt.Printf("Download microk8s via snap\n")
+  fmt.Printf("Downloading...")
+  myexec("snap download microk8s")
+  fmt.Printf("Download Completely")
+}
+
+func sendMicrok8sSnap(conn net.Conn) {
+  fmt.Print("\nDebug: [start] Send Snap files\n")
+  s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
+
+  for _, fileName := range s {
+    /// File
+    filePath := exportDir + fileName
+
+    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
+    //filePath := "./test/hoge1.txt"
+    file, err := os.Open(filePath)
+    Error(err)
+    fileInfo, err := file.Stat()
+    Error(err)
+    fileBuf := make([]byte, fileInfo.Size())
+    file.Read(fileBuf)
+
+    /// Send Image
+    fmt.Printf("\rDebug: Sending Snap files %s ...", fileName)
+    cLayer := cacis.SendMicrok8sSnap(fileBuf)
+    packet := cLayer.Marshal()
+    //fmt.Println(cLayer)
+    conn.Write(packet)
+    fmt.Printf("\rDebug: Send Snap files %s Completely\n", fileName)
+  }
+  fmt.Printf("\nDebug: [end] Send Snap files\n")
+}
+
+func setupMicrok8s() {
+  /// if RaspberryPi
+  //myexec("echo \n"cgroup_enable=memory cgroup_memory=1"\n >> /boot/firmware/cmdline.txt")
+}
+
+func clustering() {
+  //TODO microk8s enable dns dashboard
+  output := myexec("microk8s add-node")
+  fmt.Println(string(output))
+}
+
+func enableMicrok8s() {
+  //TODO microk8s enable dns dashboard
+  myexec("microk8s enable dns dashboard")
+}
+
+func getKubeconfig() {
+  myexec("microk8s config")
+}
+
+
+func myexec(cmd string) []byte {
+  slice := strings.Split(cmd, " ")
+  stdout, err := exec.Command(slice[0], slice[1:]...).Output()
+  fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
+  Error(err)
+  return stdout
 }
 
 func sortKeys(m map[string]string) []string {

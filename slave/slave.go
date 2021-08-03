@@ -5,7 +5,9 @@ import (
   "sort"
   "net"
   "os"
+  "os/exec"
   "context"
+  "strings"
   "encoding/json"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -21,7 +23,10 @@ const (
 )
 
 func Main() {
-  slave()
+  //slave()
+  //checkSnapd()
+  recieveMicrok8sSnap()
+  //
 }
 
 func slave() {
@@ -97,27 +102,7 @@ func recieveImg(s []string) {
   fmt.Println("Requested\n\n")
 
   for _, fileName := range s {
-    fmt.Printf("Debug: Recieve file '%s'\n", fileName)
-    packet := make([]byte, cacis.CacisLayerSize)
-    packetLength, err := conn.Read(packet)
-    Error(err)
-    fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
-    cLayer = cacis.Unmarshal(packet)
-
-    // Recieve Packet PAYLOAD
-    fmt.Println("Debug: Read Packet PAYLOAD")
-    cLayer.Payload = loadPayload(conn, cLayer.Length)
-
-    fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
-
-    fmt.Printf("Debug: Write file '%s'\n\n", fileName)
-    // File
-    filePath := importDir + fileName
-    //filePath := "./hoge1.txt"
-    file , err := os.Create(filePath)
-    Error(err)
-
-    file.Write(cLayer.Payload)
+    recieveFile(conn, fileName)
   }
   fmt.Println("Debug: [end] RECIEVE COMPONENT IMAGES")
 }
@@ -153,7 +138,83 @@ func importAllImg(m map[string]string) {
     }
 }
 
-func install_microk8s() {
+func recieveMicrok8sSnap() {
+  fmt.Println("Debug: [start] RECIEVE SNAP FILES")
+  s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
+  // Socket
+  conn, err := net.Dial("tcp", MASTER)
+  Error(err)
+  defer conn.Close()
+
+  // Request Snap files
+  fmt.Println("Debug: Request Snap files")
+  cLayer := cacis.RequestMicrok8sSnap()
+  packet := cLayer.Marshal()
+  fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Requested\n\n")
+
+  for _, fileName := range s {
+    recieveFile(conn, fileName)
+  }
+  fmt.Println("Debug: [end] RECIEVE SNAP FILES")
+}
+
+func snapd() {
+  //TODO
+  /// if !snap
+    /// if debian(raspberry pi os)
+      //recieve zip
+      //unzip
+      myexec("dpkg -i ./*.deb")
+      //reboot
+      myexec("snap install core")
+    /// if 
+}
+
+func installMicrok8s() {
+  //TODO microk8s check
+  fmt.Printf("Install microk8s via snap\n")
+  fmt.Printf("Installing...")
+  //myexec("snap install microk8s --classic")
+  myexec("snap ack " + importDir + "microk8s_2346.assert")
+  myexec("snap install " + importDir + "microk8s_2346.snap")
+}
+
+func leaveMicrok8s() {
+  myexec("microk8s leave")
+}
+
+func removeMicrok8s() {
+  myexec("microk8s stop")
+  myexec("microk8s reset --destroy-storage")
+  myexec("snap remove microk8s")
+  myexec("apt purge microk8s")
+}
+
+
+func recieveFile(conn net.Conn, fileName string) {
+  fmt.Printf("Debug: Recieve file '%s'\n", fileName)
+  packet := make([]byte, cacis.CacisLayerSize)
+  packetLength, err := conn.Read(packet)
+  Error(err)
+  fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
+  cLayer := cacis.Unmarshal(packet)
+
+  // Recieve Packet PAYLOAD
+  fmt.Println("Debug: Read Packet PAYLOAD")
+  cLayer.Payload = loadPayload(conn, cLayer.Length)
+
+  fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
+
+  fmt.Printf("Debug: Write file '%s'\n\n", fileName)
+  // File
+  filePath := importDir + fileName
+  //filePath := "./hoge1.txt"
+  file , err := os.Create(filePath)
+  Error(err)
+
+  file.Write(cLayer.Payload)
 }
 
 func loadPayload(conn net.Conn, targetBytes uint64) []byte {
@@ -187,6 +248,13 @@ func sortKeys(m map[string]string) []string {
   }
   */
   return sorted
+}
+
+func myexec(cmd string) {
+  slice := strings.Split(cmd, " ")
+  stdout, err := exec.Command(slice[0], slice[1:]...).Output()
+  fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
+  Error(err)
 }
 
 func Error(err error) {
