@@ -21,7 +21,7 @@ func masterCommand(cmd *cobra.Command, args []string) {
 }
 
 func masterAction() (err error) {
-    fmt.Println("This is master subcommand\n")
+    fmt.Println("Debug: This is master subcommand\n")
     master.Main()
     return nil
 }
