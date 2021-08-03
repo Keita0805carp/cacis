@@ -3,10 +3,8 @@ package master
 import (
   "fmt"
   "sort"
-  //"io"
   "net"
   "os"
-  //"strconv"
   "context"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -17,6 +15,12 @@ import (
 )
 
 const exportDir = "./master-vol/"
+const (
+  exportDir = "./master-vol/"
+  //containerdSock = "/run/containerd/containerd.sock"
+  containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
+  containerdNameSpace = "cacis"
+)
 
 var componentsList = map[string]string {
   "cni.img"             : "docker.io/calico/cni:v3.13.2",
@@ -59,8 +63,6 @@ func handling(conn net.Conn) {
   fmt.Printf("Recieve Packet from Slave. len: %d\n", packetLength)
   fmt.Println(buf)
   cLayer := cacis.Unmarshal(buf)
-  //fmt.Println(rl)
-  //fmt.Println(rl.Payload)
   //fmt.Println(string(rl.Payload))
 
   /// Swtich Type
@@ -83,7 +85,7 @@ func pullImg(imageName string) {
   fmt.Printf("\nPulling   %s ...", imageName)
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
   Error(err)
 
@@ -98,8 +100,6 @@ func pullImg(imageName string) {
   if image == nil {
     fmt.Println("Fail to Pull")
     }
-  // fmt.Print("Debug: image= ")
-  // fmt.Println(image)
   fmt.Printf("\rPulled    %s Completely\n", imageName)
 }
 
@@ -107,7 +107,7 @@ func exportImg(filePath, imageRef string){
   fmt.Printf("\rExporting %s to %s ...", imageRef, filePath)
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   Error(err)
 
@@ -147,7 +147,6 @@ func sendComponentsList(conn net.Conn) {
   fmt.Print("\nDebug: [end] Send Components List\n")
 }
 
-//////hogehoge
 func sendImg(conn net.Conn) {
   fmt.Print("\nDebug: [start] Send Components Images\n")
   s := sortKeys(componentsList)
@@ -169,7 +168,6 @@ func sendImg(conn net.Conn) {
     fmt.Printf("\rDebug: Sending Image %s ...", fileName)
     cLayer := cacis.SendImage(fileBuf)
     packet := cLayer.Marshal()
-    //fmt.Println("Debug: !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     //fmt.Println(cLayer)
     conn.Write(packet)
     fmt.Printf("\rDebug: Send Image %s Completely\n", fileName)

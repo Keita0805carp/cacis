@@ -3,12 +3,8 @@ package slave
 import (
   "fmt"
   "sort"
-  //"io"
   "net"
   "os"
-  //"time"
-  //"strconv"
-  //"strings"
   "context"
   "encoding/json"
 
@@ -20,6 +16,8 @@ import (
 const (
   MASTER = "localhost:27001"
   importDir = "./slave-vol/"
+  containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
+  containerdNameSpace = "cacis"
 )
 
 func Main() {
@@ -60,7 +58,7 @@ func recieveComponentsList() map[string]string {
   fmt.Println("Requested\n\n")
 
 
-  // Recieve Packet HEAD
+  // Recieve Packet
   fmt.Println("Debug: Recieve Packet")
   packet = make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(packet)
@@ -68,9 +66,7 @@ func recieveComponentsList() map[string]string {
   fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   //fmt.Println(cLayer)
-  //fmt.Println(string(cLayer.Payload))
 
-  // Recieve Packet PAYLOAD
   fmt.Println("Debug: Read Packet PAYLOAD")
   //fmt.Println(cLayer)
   cLayer.Payload = loadPayload(conn, cLayer.Length)
@@ -102,24 +98,17 @@ func recieveImg(s []string) {
 
   for _, fileName := range s {
     fmt.Printf("Debug: Recieve file '%s'\n", fileName)
-    // Recieve Packet HEAD
     packet := make([]byte, cacis.CacisLayerSize)
     packetLength, err := conn.Read(packet)
     Error(err)
-    fmt.Println("Debug: Recieve Packet")
     fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
     cLayer = cacis.Unmarshal(packet)
 
     // Recieve Packet PAYLOAD
     fmt.Println("Debug: Read Packet PAYLOAD")
-    cLayer.Payload = packet
-
     cLayer.Payload = loadPayload(conn, cLayer.Length)
+
     fmt.Printf("\rCompleted  %d\n", len(cLayer.Payload))
-    //fmt.Println("Debug:!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    //cLayer.Payload = packet
-    //fmt.Println(cLayer[:10])
-    //fmt.Println(string(cLayer.Payload))
 
     fmt.Printf("Debug: Write file '%s'\n\n", fileName)
     // File
@@ -137,7 +126,7 @@ func importImg(imageName, filePath string) {
   fmt.Println("Importing " + imageName + " from " + filePath + "...")
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace("cacis"))
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   Error(err)
 
@@ -149,7 +138,6 @@ func importImg(imageName, filePath string) {
     containerd.WithIndexName(imageName),
     //containerd.WithAllPlatforms(true),
   }
-
   client.Import(ctx, f, opts...)
   Error(err)
   fmt.Println("Imported")
