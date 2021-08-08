@@ -16,7 +16,8 @@ import (
 )
 
 const (
-  MASTER = "localhost:27001"
+  masterIP = "192.168.56.250"
+  masterPort = "27001"
   importDir = "./slave-vol/"
   containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
   containerdNameSpace = "cacis"
@@ -25,8 +26,10 @@ const (
 func Main() {
   //slave()
   //checkSnapd()
-  recieveMicrok8sSnap()
-  //
+
+  //recieveMicrok8sSnap()
+  //installMicrok8sSnap()
+  //clustering()
 }
 
 func slave() {
@@ -50,7 +53,7 @@ func slave() {
 func recieveComponentsList() map[string]string {
   fmt.Println("Debug: [start] RECIEVE COMPONENTS LIST")
   // Socket
-  conn, err := net.Dial("tcp", MASTER)
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   Error(err)
   defer conn.Close()
 
@@ -89,7 +92,7 @@ func recieveComponentsList() map[string]string {
 func recieveImg(s []string) {
   fmt.Println("Debug: [start] RECIEVE COMPONENT IMAGES")
   // Socket
-  conn, err := net.Dial("tcp", MASTER)
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   Error(err)
   defer conn.Close()
 
@@ -138,11 +141,41 @@ func importAllImg(m map[string]string) {
     }
 }
 
+
+func snapd() {
+  //TODO
+  /// if !snap
+    /// if debian(raspberry pi os)
+      //recieve zip
+      //unzip
+
+  fmt.Println("Debug: [start] RECIEVE snapd and install")
+  // Socket
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  Error(err)
+  defer conn.Close()
+
+  // Request Image
+  fmt.Println("Debug: Request snapd package")
+  cLayer := cacis.RequestSnapd()
+  packet := cLayer.Marshal()
+  fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Requested\n\n")
+
+  recieveFile(conn, "snapd.zip")
+
+  fmt.Println("Debug: [end] RECIEVE COMPONENT IMAGES")
+  myexec("dpkg -i ./*.deb")
+  //reboot
+  myexec("snap install core")
+}
+
 func recieveMicrok8sSnap() {
   fmt.Println("Debug: [start] RECIEVE SNAP FILES")
   s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
   // Socket
-  conn, err := net.Dial("tcp", MASTER)
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   Error(err)
   defer conn.Close()
 
@@ -160,25 +193,45 @@ func recieveMicrok8sSnap() {
   fmt.Println("Debug: [end] RECIEVE SNAP FILES")
 }
 
-func snapd() {
-  //TODO
-  /// if !snap
-    /// if debian(raspberry pi os)
-      //recieve zip
-      //unzip
-      myexec("dpkg -i ./*.deb")
-      //reboot
-      myexec("snap install core")
-    /// if 
-}
-
-func installMicrok8s() {
+func installMicrok8sSnap() {
   //TODO microk8s check
   fmt.Printf("Install microk8s via snap\n")
   fmt.Printf("Installing...")
   //myexec("snap install microk8s --classic")
   myexec("snap ack " + importDir + "microk8s_2346.assert")
-  myexec("snap install " + importDir + "microk8s_2346.snap")
+  myexec("snap install " + importDir + "microk8s_2346.snap" + " --classic")
+}
+
+func clustering() {
+  fmt.Println("Debug: [start] CLUSTERING")
+  // Socket
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  Error(err)
+  defer conn.Close()
+
+  // Request Snap files
+  fmt.Println("Debug: Request Clustering")
+  cLayer := cacis.RequestClustering()
+  packet := cLayer.Marshal()
+  fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Requested\n\n")
+
+  packet = make([]byte, cacis.CacisLayerSize)
+  packetLength, err := conn.Read(packet)
+  Error(err)
+  fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
+  cLayer = cacis.Unmarshal(packet)
+
+  // Recieve Packet PAYLOAD
+  fmt.Println("Debug: Read Packet PAYLOAD")
+  cLayer.Payload = loadPayload(conn, cLayer.Length)
+
+  result, err := myexec(string(cLayer.Payload))
+  fmt.Println(string(result))
+  Error(err)
+
+  fmt.Println("Debug: [end] CLUSTERING")
 }
 
 func leaveMicrok8s() {
@@ -250,11 +303,12 @@ func sortKeys(m map[string]string) []string {
   return sorted
 }
 
-func myexec(cmd string) {
+func myexec(cmd string) ([]byte, error) {
   slice := strings.Split(cmd, " ")
   stdout, err := exec.Command(slice[0], slice[1:]...).Output()
-  fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
+  //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
   Error(err)
+  return stdout, err
 }
 
 func Error(err error) {
