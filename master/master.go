@@ -18,6 +18,7 @@ import (
 )
 
 const (
+  masterIP = "192.168.56.250"
   exportDir = "./master-vol/"
   //containerdSock = "/run/containerd/containerd.sock"
   containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
@@ -37,16 +38,14 @@ var componentsList = map[string]string {
 
 func Main() {
   // exportAndPullAllImg()
-  //server()
-  ///setupMicrok8s()
-  //enableMicrok8s()
-  clustering()
+  server()
+  //downloadMicrok8s()
 }
 
 
 func server() {
   // Socket
-  listen, err := net.Listen("tcp", "localhost:27001")
+  listen, err := net.Listen("tcp", masterIP+":27001")
   Error(err)
   defer listen.Close()
 
@@ -94,7 +93,7 @@ func handling(conn net.Conn) {
   } else if cLayer.Type == 50 {  /// request snapd
 
     fmt.Println("Debug: Type = 50")
-    clustering()
+    clustering(conn)
 
   } else {
     fmt.Println("Err: Unknown Type")
@@ -198,6 +197,7 @@ func sendImg(conn net.Conn) {
 func snapd() {
   //TODO snapd check
   //TODO snapd install
+  myexec("apt install snapd")
 }
 
 func sendSnapd(conn net.Conn) {
@@ -233,7 +233,7 @@ func downloadMicrok8s() {
   //TODO snap install microk8s --classic
   fmt.Printf("Download microk8s via snap\n")
   fmt.Printf("Downloading...")
-  myexec("snap download microk8s")
+  myexec("snap download microk8s --target-directory=" + exportDir)
   fmt.Printf("Download Completely")
 }
 
@@ -270,10 +270,22 @@ func setupMicrok8s() {
   //myexec("echo \n"cgroup_enable=memory cgroup_memory=1"\n >> /boot/firmware/cmdline.txt")
 }
 
-func clustering() {
+func clustering(conn net.Conn) {
+  fmt.Print("\nDebug: [start] Clustering\n")
   //TODO microk8s enable dns dashboard
-  output := myexec("microk8s add-node")
-  fmt.Println(string(output))
+  output, err := myexec("microk8s add-node")
+  Error(err)
+  //fmt.Println(string(output))
+  //TODO regex getc command to join node
+  regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
+  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
+
+  /// Send CLuster Info
+  cLayer := cacis.SendClusterInfo([]byte(joinCmd))
+  packet := cLayer.Marshal()
+  //fmt.Println(cLayer)
+  conn.Write(packet)
+  fmt.Printf("\nDebug: [end] Clustering\n")
 }
 
 func enableMicrok8s() {
@@ -286,12 +298,12 @@ func getKubeconfig() {
 }
 
 
-func myexec(cmd string) []byte {
+func myexec(cmd string) ([]byte, error) {
   slice := strings.Split(cmd, " ")
   stdout, err := exec.Command(slice[0], slice[1:]...).Output()
-  fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
+  //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
   Error(err)
-  return stdout
+  return stdout, err
 }
 
 func sortKeys(m map[string]string) []string {
