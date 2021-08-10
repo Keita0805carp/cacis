@@ -55,12 +55,11 @@ func RequestSnapd() CacisLayer {
   return NewCacisPacket(40, 0, nil)
 }
 
-func RequestClustering(p string) CacisLayer {
+func RequestClustering() CacisLayer {
   return NewCacisPacket(50, 0, nil)
 }
 
-func RequestUnclustering(p string) CacisLayer {
-  p = []byte(p)
+func RequestUnclustering(p []byte) CacisLayer {
   return NewCacisPacket(60, uint64(len(p)), p)
 }
 
