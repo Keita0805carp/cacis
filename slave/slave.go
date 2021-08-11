@@ -4,6 +4,7 @@ import (
   "fmt"
   "sort"
   "net"
+  "time"
   "os"
   "os/exec"
   "context"
@@ -20,16 +21,21 @@ const (
   masterPort = "27001"
   importDir = "./slave-vol/"
   containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
-  containerdNameSpace = "cacis"
+  containerdNameSpace = "k8s.io"
+  //containerdNameSpace = "cacis"
 )
 
 func Main() {
-  //slave()
   //checkSnapd()
 
   //recieveMicrok8sSnap()
   //installMicrok8sSnap()
-  //clustering()
+
+  //fmt.Println("wait 3 seconds...")
+  time.Sleep(3 * time.Second)
+  //slave()
+
+  clustering()
 }
 
 func slave() {
@@ -47,7 +53,7 @@ func slave() {
   // }
   sortedExportFileName := sortKeys(componentsList)
   recieveImg(sortedExportFileName)
-  //importAllImg(componentsList)
+  importAllImg(componentsList)
 }
 
 func recieveComponentsList() map[string]string {
@@ -227,6 +233,7 @@ func clustering() {
   fmt.Println("Debug: Read Packet PAYLOAD")
   cLayer.Payload = loadPayload(conn, cLayer.Length)
 
+  fmt.Printf("\nDebug: Clustering...\n")
   result, err := myexec(string(cLayer.Payload))
   fmt.Println(string(result))
   Error(err)
@@ -234,15 +241,17 @@ func clustering() {
   fmt.Println("Debug: [end] CLUSTERING")
 }
 
-func leaveMicrok8s() {
+func unclustering() {
+  //TODO request leave
+  //TODO tell hostname to master
   myexec("microk8s leave")
 }
 
 func removeMicrok8s() {
   myexec("microk8s stop")
   myexec("microk8s reset --destroy-storage")
-  myexec("snap remove microk8s")
-  myexec("apt purge microk8s")
+  myexec("snap remove --purge microk8s")
+  myexec("apt purge snap")
 }
 
 
