@@ -59,6 +59,10 @@ func RequestClustering() CacisLayer {
   return NewCacisPacket(50, 0, nil)
 }
 
+func RequestUnclustering(p []byte) CacisLayer {
+  return NewCacisPacket(60, uint64(len(p)), p)
+}
+
 // Send
 func SendComponentsList(list map[string]string) CacisLayer {
   p, err := json.Marshal(list)
