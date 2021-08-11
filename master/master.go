@@ -4,6 +4,7 @@ import (
   "fmt"
   "sort"
   "net"
+  "time"
   "os"
   "os/exec"
   "regexp"
@@ -19,6 +20,7 @@ import (
 
 const (
   masterIP = "192.168.56.250"
+  masterPort = "27001"
   exportDir = "./master-vol/"
   //containerdSock = "/run/containerd/containerd.sock"
   containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
@@ -37,15 +39,18 @@ var componentsList = map[string]string {
 }
 
 func Main() {
-  // exportAndPullAllImg()
-  server()
   //downloadMicrok8s()
+  //installMicrok8s()
+  //fmt.Println("wait 5 seconds")
+  time.Sleep(0 * time.Second)
+  //exportAndPullAllImg()
+  server()
 }
 
 
 func server() {
   // Socket
-  listen, err := net.Listen("tcp", masterIP+":27001")
+  listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   Error(err)
   defer listen.Close()
 
@@ -126,7 +131,7 @@ func exportImg(filePath, imageRef string){
   fmt.Printf("\rExporting %s to %s ...", imageRef, filePath)
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace(containerdNameSpace))
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   Error(err)
 
@@ -171,17 +176,7 @@ func sendImg(conn net.Conn) {
   s := sortKeys(componentsList)
 
   for _, fileName := range s {
-    /// File
-    filePath := exportDir + fileName
-
-    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
-    //filePath := "./test/hoge1.txt"
-    file, err := os.Open(filePath)
-    Error(err)
-    fileInfo, err := file.Stat()
-    Error(err)
-    fileBuf := make([]byte, fileInfo.Size())
-    file.Read(fileBuf)
+    fileBuf := readFileByte(fileName)
 
     /// Send Image
     fmt.Printf("\rDebug: Sending Image %s ...", fileName)
@@ -205,17 +200,7 @@ func sendSnapd(conn net.Conn) {
   s := []string{"snapd.zip"}
 
   for _, fileName := range s {
-    /// File
-    filePath := exportDir + fileName
-
-    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
-    //filePath := "./test/hoge1.txt"
-    file, err := os.Open(filePath)
-    Error(err)
-    fileInfo, err := file.Stat()
-    Error(err)
-    fileBuf := make([]byte, fileInfo.Size())
-    file.Read(fileBuf)
+    fileBuf := readFileByte(fileName)
 
     /// Send Image
     fmt.Printf("\rDebug: Sending Snapd %s ...", fileName)
@@ -234,7 +219,17 @@ func downloadMicrok8s() {
   fmt.Printf("Download microk8s via snap\n")
   fmt.Printf("Downloading...")
   myexec("snap download microk8s --target-directory=" + exportDir)
-  fmt.Printf("Download Completely")
+  fmt.Printf("Download Completely\n")
+}
+
+func installMicrok8s() {
+  //TODO microk8s check
+  //TODO snap install microk8s --classic
+  fmt.Printf("Install microk8s via snap\n")
+  fmt.Printf("Installing...")
+  myexec("snap ack " + exportDir + "microk8s_2346.assert")
+  myexec("snap install " + exportDir + "microk8s_2346.snap" + " --classic")
+  fmt.Printf("Install Completely\n")
 }
 
 func sendMicrok8sSnap(conn net.Conn) {
@@ -242,17 +237,7 @@ func sendMicrok8sSnap(conn net.Conn) {
   s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
 
   for _, fileName := range s {
-    /// File
-    filePath := exportDir + fileName
-
-    fmt.Printf("\nDebug: Read file '%s'\n", fileName)
-    //filePath := "./test/hoge1.txt"
-    file, err := os.Open(filePath)
-    Error(err)
-    fileInfo, err := file.Stat()
-    Error(err)
-    fileBuf := make([]byte, fileInfo.Size())
-    file.Read(fileBuf)
+    fileBuf := readFileByte(fileName)
 
     /// Send Image
     fmt.Printf("\rDebug: Sending Snap files %s ...", fileName)
@@ -297,6 +282,28 @@ func getKubeconfig() {
   myexec("microk8s config")
 }
 
+func unclustering() {
+  //TODO get request
+  //TODO get hostname wants to leave
+  myexec("microk8s remove-node cacis-vagrant-slave")
+}
+
+
+func readFileByte(fileName string) []byte {
+  /// File
+  filePath := exportDir + fileName
+
+  fmt.Printf("\nDebug: Read file '%s'\n", fileName)
+  //filePath := "./test/hoge1.txt"
+  file, err := os.Open(filePath)
+  Error(err)
+  fileInfo, err := file.Stat()
+  Error(err)
+  fileBuf := make([]byte, fileInfo.Size())
+  file.Read(fileBuf)
+
+  return fileBuf
+}
 
 func myexec(cmd string) ([]byte, error) {
   slice := strings.Split(cmd, " ")
