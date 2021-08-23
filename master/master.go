@@ -14,7 +14,6 @@ import (
   "github.com/containerd/containerd/images/archive"
 )
 
-const exportDir = "./master-vol/"
 const (
   exportDir = "./master-vol/"
   //containerdSock = "/run/containerd/containerd.sock"
@@ -42,13 +41,13 @@ func Main() {
 func server() {
   // Socket
   listen, err := net.Listen("tcp", "localhost:27001")
-  Error(err)
+  cacis.Error(err)
   defer listen.Close()
 
   for {
     fmt.Printf("Debug: Waiting slave\n\n")
     conn, err := listen.Accept()
-    Error(err)
+    cacis.Error(err)
     handling(conn)
     conn.Close()
   }
@@ -58,7 +57,7 @@ func handling(conn net.Conn) {
   // Recieve Request from slave
   buf := make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(buf)
-  Error(err)
+  cacis.Error(err)
 
   fmt.Printf("Recieve Packet from Slave. len: %d\n", packetLength)
   fmt.Println(buf)
@@ -87,14 +86,14 @@ func pullImg(imageName string) {
   ctx := context.Background()
   client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
-  Error(err)
+  cacis.Error(err)
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
   }
 
   contents, err := client.Fetch(ctx, imageName, opts...)
-  Error(err)
+  cacis.Error(err)
 
   image := containerd.NewImageWithPlatform(client, contents, platforms.All)
   if image == nil {
@@ -109,11 +108,11 @@ func exportImg(filePath, imageRef string){
   ctx := context.Background()
   client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
-  Error(err)
+  cacis.Error(err)
 
   f, err := os.Create(filePath)
   defer f.Close()
-  Error(err)
+  cacis.Error(err)
 
   imageStore := client.ImageService()
   opts := []archive.ExportOpt{
@@ -122,7 +121,7 @@ func exportImg(filePath, imageRef string){
   }
 
   client.Export(ctx, f, opts...)
-  Error(err)
+  cacis.Error(err)
   fmt.Printf("\rExported  %s to %s Completely\n", imageRef, filePath)
 }
 
@@ -158,9 +157,9 @@ func sendImg(conn net.Conn) {
     fmt.Printf("\nDebug: Read file '%s'\n", fileName)
     //filePath := "./test/hoge1.txt"
     file, err := os.Open(filePath)
-    Error(err)
+    cacis.Error(err)
     fileInfo, err := file.Stat()
-    Error(err)
+    cacis.Error(err)
     fileBuf := make([]byte, fileInfo.Size())
     file.Read(fileBuf)
 
@@ -193,10 +192,4 @@ func sortKeys(m map[string]string) []string {
   }
   */
   return sorted
-}
-
-func Error(err error) {
-  if err != nil {
-    fmt.Println(err)
-  }
 }
