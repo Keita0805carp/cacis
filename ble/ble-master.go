@@ -3,6 +3,7 @@ package ble
 import (
   "fmt"
   "time"
+  "strings"
   "github.com/muka/go-bluetooth/hw"
   "github.com/muka/go-bluetooth/api/service"
   "github.com/muka/go-bluetooth/bluez/profile/agent"
@@ -14,40 +15,51 @@ const (
 
 func Main() {
   fmt.Println("ble master")
-  initialize()
-  advertise()
+  addr := initialize()
+  fmt.Printf("myaddr: %s \n", addr)
+  advertise(addr)
 }
 
-func initialize() {
+func initialize() string {
   btmgmt := hw.NewBtMgmt(adapterId)
   btmgmt.SetPowered(false)
   btmgmt.SetLe(true)
   btmgmt.SetBredr(false)
   btmgmt.SetPowered(true)
+
+  adapter, err := hw.GetAdapter(adapterId)
+  Error(err)
+  return adapter.Address
 }
 
-func advertise() {
+func advertise(addr string) {
+  //TODO UUID gen
+  serviceID := "5678"
   options := service.AppOptions {
     AdapterID: adapterId,
     AgentCaps: agent.CapNoInputNoOutput,
-    UUIDSuffix: "-0000-1000-8000-00805F9B34FB",
+    UUIDSuffix: "-9012-3456-7890-ABCDEFABCDEF",
     UUID:       "1234",
   }
+
+  ssid := strings.Replace(addr, ":", "", 5)
+  pass := options.UUID + serviceID + options.UUIDSuffix
 
   app, err := service.NewApp(options)
   Error(err)
   defer app.Close()
 
-  app.SetName("master-go")
+  app.SetName("cacis-" + options.UUID + serviceID)
 
-  service1, err := app.NewService("2233")
+  service, err := app.NewService(serviceID)
   Error(err)
-  err = app.AddService(service1)
+  err = app.AddService(service)
   Error(err)
-
   err = app.Run()
   Error(err)
-  fmt.Printf("[DEBUG] Exposed service %s\n", service1.Properties.UUID)
+
+  fmt.Printf("[INFO] SSID: %s\n", ssid)
+  fmt.Printf("[INFO] PASS: %s\n", pass)
 
   timeout := uint32(6 * 3600) // 6h
   fmt.Printf("[DEBUG] Advertising for %ds...\n", timeout)
