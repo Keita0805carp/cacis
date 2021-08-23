@@ -53,10 +53,11 @@ func discover(a *adapter.Adapter1) (*device.Device1, error) {
     properties := dev.Properties
 
     fmt.Printf("[Debug] Discovered (%s) %s\n", properties.Alias, properties.Address)
-    fmt.Println(regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(properties.Alias))
+
+    isCacisNode := regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(properties.Alias)
 
     //TODO regex cacis-xxxxxxxx
-    if properties.Name != "cacis-12345678" {
+    if !isCacisNode {
       continue
     }
 
