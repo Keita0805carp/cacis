@@ -2,7 +2,7 @@ package cmd
 
 import (
   "fmt"
-  "github.com/keita0805carp/cacis/master"
+  "github.com/keita0805carp/cacis/ble"
 
   "github.com/spf13/cobra"
 )
@@ -22,7 +22,7 @@ func masterCommand(cmd *cobra.Command, args []string) {
 
 func masterAction() (err error) {
     fmt.Println("Debug: This is master subcommand\n")
-    master.Main()
+    ble.Main()
     return nil
 }
 
