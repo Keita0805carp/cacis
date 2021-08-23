@@ -14,7 +14,6 @@ import (
   "github.com/containerd/containerd/images/archive"
 )
 
-const exportDir = "./master-vol/"
 const (
   exportDir = "./master-vol/"
   //containerdSock = "/run/containerd/containerd.sock"
