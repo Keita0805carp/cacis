@@ -9,10 +9,6 @@ import (
   "github.com/muka/go-bluetooth/bluez/profile/device"
 )
 
-const (
-  adapterID = "hci0"
-)
-
 func Main() {
   fmt.Println("ble slave")
   slave()
@@ -20,6 +16,7 @@ func Main() {
 }
 
 func slave() {
+  adapterID := adapter.GetDefaultAdapterID()
   ad, err := adapter.NewAdapter1FromAdapterID(adapterID)
   Error(err)
   err = ad.FlushDevices()
