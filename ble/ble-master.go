@@ -4,6 +4,7 @@ import (
   "fmt"
   "time"
   "strings"
+  "github.com/google/uuid"
   "github.com/muka/go-bluetooth/hw"
   "github.com/muka/go-bluetooth/api/service"
   "github.com/muka/go-bluetooth/bluez/profile/agent"
@@ -11,13 +12,20 @@ import (
 
 const (
   adapterId = "hci0"
+  UUID = "12345678-9012-3456-7890-abcdefabcdef"
 )
 
 func Main() {
+  //UUID := genUUID()
+
   fmt.Println("ble master")
   addr := initialize()
-  fmt.Printf("myaddr: %s \n", addr)
-  advertise(addr)
+  fmt.Printf("UUID: %s \nmyaddr: %s\n", UUID, addr)
+  advertise(UUID, addr)
+}
+
+func genUUID() string {
+  return uuid.New().String()
 }
 
 func initialize() string {
@@ -32,18 +40,18 @@ func initialize() string {
   return adapter.Address
 }
 
-func advertise(addr string) {
+func advertise(UUID, addr string) {
   //TODO UUID gen
-  serviceID := "5678"
+  serviceID := UUID[4:8]
   options := service.AppOptions {
     AdapterID: adapterId,
     AgentCaps: agent.CapNoInputNoOutput,
-    UUIDSuffix: "-9012-3456-7890-ABCDEFABCDEF",
-    UUID:       "1234",
+    UUIDSuffix: UUID[8:],
+    UUID:       UUID[:4],
   }
 
   ssid := strings.Replace(addr, ":", "", 5)
-  pass := options.UUID + serviceID + options.UUIDSuffix
+  pass := strings.Replace(UUID, "-", "", 4)
 
   app, err := service.NewApp(options)
   Error(err)
