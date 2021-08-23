@@ -10,37 +10,37 @@ import (
   "github.com/muka/go-bluetooth/bluez/profile/agent"
 )
 
-const (
-  adapterId = "hci0"
-  UUID = "12345678-9012-3456-7890-abcdefabcdef"
-)
-
 func Main() {
   //UUID := genUUID()
+  UUID := "12345678-9012-3456-7890-abcdefabcdef"
 
   fmt.Println("ble master")
-  addr := initialize()
-  fmt.Printf("UUID: %s \nmyaddr: %s\n", UUID, addr)
-  advertise(UUID, addr)
+  adapterAddr, adapterId := initialize()
+  fmt.Printf("Addr: %s \nUUID: %s\n", adapterAddr, UUID)
+  advertise(UUID, adapterAddr, adapterId)
 }
 
 func genUUID() string {
   return uuid.New().String()
 }
 
-func initialize() string {
+func initialize() (string, string) {
+  adaptersInfo, err := hw.GetAdapters()
+  adapterInfo := adaptersInfo[0]
+  Error(err)
+  adapterId := adapterInfo.AdapterID
+  adapterAddr := adapterInfo.Address
+
   btmgmt := hw.NewBtMgmt(adapterId)
   btmgmt.SetPowered(false)
   btmgmt.SetLe(true)
   btmgmt.SetBredr(false)
   btmgmt.SetPowered(true)
 
-  adapter, err := hw.GetAdapter(adapterId)
-  Error(err)
-  return adapter.Address
+  return adapterAddr, adapterId
 }
 
-func advertise(UUID, addr string) {
+func advertise(UUID, adapterAddr, adapterId string) {
   //TODO UUID gen
   serviceID := UUID[4:8]
   options := service.AppOptions {
@@ -50,7 +50,7 @@ func advertise(UUID, addr string) {
     UUID:       UUID[:4],
   }
 
-  ssid := strings.Replace(addr, ":", "", 5)
+  ssid := strings.Replace(adapterAddr, ":", "", 5)
   pass := strings.Replace(UUID, "-", "", 4)
 
   app, err := service.NewApp(options)
