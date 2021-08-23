@@ -4,12 +4,14 @@ import (
   "fmt"
   "regexp"
 
+  "github.com/keita0805carp/cacis/cacis"
+
   "github.com/muka/go-bluetooth/api"
   "github.com/muka/go-bluetooth/bluez/profile/adapter"
   "github.com/muka/go-bluetooth/bluez/profile/device"
 )
 
-func Main() {
+func Discover() {
   fmt.Println("ble slave")
   slave()
   //sockettest()
@@ -18,14 +20,14 @@ func Main() {
 func slave() {
   adapterID := adapter.GetDefaultAdapterID()
   ad, err := adapter.NewAdapter1FromAdapterID(adapterID)
-  Error(err)
+  cacis.Error(err)
   err = ad.FlushDevices()
-  Error(err)
+  cacis.Error(err)
 
   fmt.Printf("Discovering on %s\n", adapterID)
 
   dev, err := discover(ad)
-  Error(err)
+  cacis.Error(err)
   p := dev.Properties
   fmt.Printf("Name: %s \n", p.Name)
   fmt.Printf("Address: %s (=SSID) \n", p.Address)
@@ -35,13 +37,13 @@ func slave() {
 
 func discover(a *adapter.Adapter1) (*device.Device1, error) {
   discoverd, cancel, err := api.Discover(a, nil)
-  Error(err)
+  cacis.Error(err)
   defer cancel()
 
   for ev := range discoverd {
 
     dev, err := device.NewDevice1(ev.Path)
-    Error(err)
+    cacis.Error(err)
 
     if dev == nil || dev.Properties == nil {
       continue
@@ -63,8 +65,3 @@ func discover(a *adapter.Adapter1) (*device.Device1, error) {
   return nil, nil
 }
 
-func Error(err error) {
-  if err != nil {
-    fmt.Println(err)
-  }
-}

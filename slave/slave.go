@@ -46,7 +46,7 @@ func recieveComponentsList() map[string]string {
   fmt.Println("Debug: [start] RECIEVE COMPONENTS LIST")
   // Socket
   conn, err := net.Dial("tcp", MASTER)
-  Error(err)
+  cacis.Error(err)
   defer conn.Close()
 
   // Request Image
@@ -62,7 +62,7 @@ func recieveComponentsList() map[string]string {
   fmt.Println("Debug: Recieve Packet")
   packet = make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(packet)
-  Error(err)
+  cacis.Error(err)
   fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   //fmt.Println(cLayer)
@@ -75,7 +75,7 @@ func recieveComponentsList() map[string]string {
 
   var tmp map[string]string
   err = json.Unmarshal(cLayer.Payload, &tmp)
-  Error(err)
+  cacis.Error(err)
 
   fmt.Println("Debug: [end] RECIEVE COMPONENTS LIST")
   return tmp
@@ -85,7 +85,7 @@ func recieveImg(s []string) {
   fmt.Println("Debug: [start] RECIEVE COMPONENT IMAGES")
   // Socket
   conn, err := net.Dial("tcp", MASTER)
-  Error(err)
+  cacis.Error(err)
   defer conn.Close()
 
   // Request Image
@@ -100,7 +100,7 @@ func recieveImg(s []string) {
     fmt.Printf("Debug: Recieve file '%s'\n", fileName)
     packet := make([]byte, cacis.CacisLayerSize)
     packetLength, err := conn.Read(packet)
-    Error(err)
+    cacis.Error(err)
     fmt.Printf("Debug: Read Packet HEADER. len: %d\n", packetLength)
     cLayer = cacis.Unmarshal(packet)
 
@@ -115,7 +115,7 @@ func recieveImg(s []string) {
     filePath := importDir + fileName
     //filePath := "./hoge1.txt"
     file , err := os.Create(filePath)
-    Error(err)
+    cacis.Error(err)
 
     file.Write(cLayer.Payload)
   }
@@ -128,18 +128,18 @@ func importImg(imageName, filePath string) {
   ctx := context.Background()
   client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
-  Error(err)
+  cacis.Error(err)
 
   f, err := os.Open(filePath)
   defer f.Close()
-  Error(err)
+  cacis.Error(err)
 
   opts := []containerd.ImportOpt{
     containerd.WithIndexName(imageName),
     //containerd.WithAllPlatforms(true),
   }
   client.Import(ctx, f, opts...)
-  Error(err)
+  cacis.Error(err)
   fmt.Println("Imported")
 }
 
@@ -163,7 +163,7 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
   for len(packet) < int(targetBytes){
     buf := make([]byte, targetBytes - uint64(recievedBytes))
     packetLength, err := conn.Read(buf)
-    Error(err)
+    cacis.Error(err)
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
     fmt.Printf("\rDebug: recieving...")
@@ -187,10 +187,4 @@ func sortKeys(m map[string]string) []string {
   }
   */
   return sorted
-}
-
-func Error(err error) {
-  if err != nil {
-    fmt.Println(err)
-  }
 }

@@ -4,13 +4,16 @@ import (
   "fmt"
   "time"
   "strings"
+
+  "github.com/keita0805carp/cacis/cacis"
+
   "github.com/google/uuid"
   "github.com/muka/go-bluetooth/hw"
   "github.com/muka/go-bluetooth/api/service"
   "github.com/muka/go-bluetooth/bluez/profile/agent"
 )
 
-func Main() {
+func Advertise() {
   //UUID := genUUID()
   UUID := "12345678-9012-3456-7890-abcdefabcdef"
 
@@ -27,7 +30,7 @@ func genUUID() string {
 func initialize() (string, string) {
   adaptersInfo, err := hw.GetAdapters()
   adapterInfo := adaptersInfo[0]
-  Error(err)
+  cacis.Error(err)
   adapterId := adapterInfo.AdapterID
   adapterAddr := adapterInfo.Address
 
@@ -54,17 +57,17 @@ func advertise(UUID, adapterAddr, adapterId string) {
   pass := strings.Replace(UUID, "-", "", 4)
 
   app, err := service.NewApp(options)
-  Error(err)
+  cacis.Error(err)
   defer app.Close()
 
   app.SetName("cacis-" + options.UUID + serviceID)
 
   service, err := app.NewService(serviceID)
-  Error(err)
+  cacis.Error(err)
   err = app.AddService(service)
-  Error(err)
+  cacis.Error(err)
   err = app.Run()
-  Error(err)
+  cacis.Error(err)
 
   fmt.Printf("[INFO] SSID: %s\n", ssid)
   fmt.Printf("[INFO] PASS: %s\n", pass)
@@ -72,7 +75,7 @@ func advertise(UUID, adapterAddr, adapterId string) {
   timeout := uint32(6 * 3600) // 6h
   fmt.Printf("[DEBUG] Advertising for %ds...\n", timeout)
   cancel, err := app.Advertise(timeout)
-  Error(err)
+  cacis.Error(err)
 
   defer cancel()
   time.Sleep(time.Duration(timeout) * time.Second)
