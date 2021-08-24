@@ -2,7 +2,7 @@ package cmd
 
 import (
   "fmt"
-  "github.com/keita0805carp/cacis/ble"
+  "github.com/keita0805carp/cacis/connection"
   //"github.com/keita0805carp/cacis/slave"
 
   "github.com/spf13/cobra"
@@ -23,7 +23,7 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 
 func slaveAction() (err error) {
     fmt.Println("Debug: This is slave subcommand\n")
-    ble.Discover()
+    connection.Discover()
     //slave.Main()
     return nil
 }
