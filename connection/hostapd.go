@@ -13,15 +13,20 @@ const (
   hostapdConfPath = "connection/hostapd.conf"
 )
 
-func StartHostapd() {
-  genConfig("ssidhoge", "passhoge")
+func StartHostapd(ssid, pw string) {
+  genConfig(ssid, pw)
+  fmt.Printf("[INFO] SSID: %s\n", ssid)
+  fmt.Printf("[INFO] PASS: %s\n", pw)
 
+  fmt.Println("[DEBUG] Start hostapd")
   hoge, err := cacis.ExecCmd("hostapd " + hostapdConfPath)
   cacis.Error(err)
   fmt.Println(string(hoge))
+  fmt.Println("[DEBUG] Terminating...")
 }
 
 func genConfig(ssid, pw string) {
+  fmt.Println("[DEBUG] Generate hostapd Config...")
   bytes, err := ioutil.ReadFile(hostapdConfTemplatePath)
   cacis.Error(err)
 
@@ -30,8 +35,7 @@ func genConfig(ssid, pw string) {
   rep = regexp.MustCompile(`wpa_passphrase=.*`)
   bytes = rep.ReplaceAll(bytes, []byte("wpa_passphrase="+pw))
 
-  fmt.Println("Export config")
-
   ioutil.WriteFile(hostapdConfPath, bytes, 0644)
+  fmt.Println("[DEBUG] Generated hostapd Config")
 }
 

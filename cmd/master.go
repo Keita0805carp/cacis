@@ -23,8 +23,8 @@ func masterCommand(cmd *cobra.Command, args []string) {
 
 func masterAction() (err error) {
     fmt.Println("Debug: This is master subcommand\n")
-    connection.StartHostapd()
-    //connection.Advertise()
+    connection.Advertise()
+    //connection.StartHostapd("ssidhoge", "passhoge")
     //master.Main()
     return nil
 }
