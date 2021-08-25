@@ -2,7 +2,7 @@ package connection
 
 import (
   "fmt"
-  "regexp"
+  "strings"
   "io/ioutil"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -29,13 +29,12 @@ func genConfig(ssid, pw string) {
   fmt.Println("[DEBUG] Generate hostapd Config...")
   bytes, err := ioutil.ReadFile(hostapdConfTemplatePath)
   cacis.Error(err)
+  config := string(bytes)
 
-  rep := regexp.MustCompile(`ssid=.*`)
-  bytes = rep.ReplaceAll(bytes, []byte("ssid="+ssid))
-  rep = regexp.MustCompile(`wpa_passphrase=.*`)
-  bytes = rep.ReplaceAll(bytes, []byte("wpa_passphrase="+pw))
+  config = strings.Replace(config, "{{SSID}}", ssid, 1)
+  config = strings.Replace(config, "{{PASSWORD}}", pw, 1)
 
-  ioutil.WriteFile(hostapdConfPath, bytes, 0644)
+  ioutil.WriteFile(hostapdConfPath, []byte(config), 0644)
   fmt.Println("[DEBUG] Generated hostapd Config")
 }
 
