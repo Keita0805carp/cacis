@@ -1,6 +1,7 @@
 package connection
 
 import (
+  "os"
   "log"
   "strings"
   "io/ioutil"
@@ -36,3 +37,11 @@ func genNetplanConfig(ssid, pw string) {
   ioutil.WriteFile(netplanConfPath, []byte(config), 0644)
   log.Println("[Debug] Generated netplan Config")
 }
+
+func delNetplanConfig() {
+  err := os.Remove(netplanConfPath)
+  cacis.Error(err)
+  cacis.ExecCmd("netplan apply", false)
+  log.Println("[Debug] Clean netplan")
+}
+
