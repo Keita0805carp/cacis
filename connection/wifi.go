@@ -40,32 +40,3 @@ func genNetplanConfig(ssid, pw string) {
   ioutil.WriteFile(netplanConfPath, []byte(config), 0644)
   fmt.Println("[DEBUG] Generated netplan Config")
 }
-
-func test() {
-  //ssid := "DCA6326E3A9D"
-  //pw := "12345678901234567890abcdefabcdef"
-
-  //ifaces := wireless.Interfaces()
-  //fmt.Println(ifaces)
-
-  //wc, err := wireless.NewClient("wlan0")
-  //cacis.Error(err)
-  //defer wc.Close()
-  //fmt.Println(wc)
-
-  //dial, err := wireless.Dial("wlan0")
-  //cacis.Error(err)
-
-  // c, err := wifi.New()
-  // cacis.Error(err)
-  // defer c.Close()
-  //
-  // ifi, err := c.Interfaces()
-  // cacis.Error(err)
-  //
-  // err = c.Connect(ifi[0], ssid)
-  // cacis.Error(err)
-  //
-  //
-  //err = c.Connect(
-}
