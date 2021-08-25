@@ -4,6 +4,8 @@ import (
   "fmt"
   "strings"
   "io/ioutil"
+  "os"
+  "os/signal"
 
   "github.com/keita0805carp/cacis/cacis"
 )
@@ -18,11 +20,19 @@ func StartHostapd(ssid, pw string) {
   fmt.Printf("[INFO] SSID: %s\n", ssid)
   fmt.Printf("[INFO] PASS: %s\n", pw)
 
-  fmt.Println("[DEBUG] Start hostapd")
-  hoge, err := cacis.ExecCmd("hostapd " + hostapdConfPath)
+  _, err = cacis.ExecCmd("killall -q hostapd")
+
+  fmt.Println("[DEBUG] Start hostapd in the Background")
+  _, err := cacis.ExecCmd("hostapd -B " + hostapdConfPath)
   cacis.Error(err)
-  fmt.Println(string(hoge))
-  fmt.Println("[DEBUG] Terminating...")
+
+  c := make(chan os.Signal, 1)
+  signal.Notify(c, os.Interrupt)
+  fmt.Println("Running hostpad... (Press Ctrl-C to End)")
+
+  <-c
+  _, err = cacis.ExecCmd("killall -q hostapd")
+  fmt.Println("[DEBUG] Terminated")
 }
 
 func genConfig(ssid, pw string) {
