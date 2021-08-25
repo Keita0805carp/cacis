@@ -20,18 +20,17 @@ func StartHostapd(ssid, pw string) {
   fmt.Printf("[INFO] SSID: %s\n", ssid)
   fmt.Printf("[INFO] PASS: %s\n", pw)
 
-  _, err = cacis.ExecCmd("killall -q hostapd")
+  cacis.ExecCmd("killall -q hostapd", false)
 
   fmt.Println("[DEBUG] Start hostapd in the Background")
-  _, err := cacis.ExecCmd("hostapd -B " + hostapdConfPath)
-  cacis.Error(err)
+  cacis.ExecCmd("hostapd -B " + hostapdConfPath, false)
 
   c := make(chan os.Signal, 1)
   signal.Notify(c, os.Interrupt)
   fmt.Println("Running hostpad... (Press Ctrl-C to End)")
 
   <-c
-  _, err = cacis.ExecCmd("killall -q hostapd")
+  cacis.ExecCmd("killall -q hostapd", false)
   fmt.Println("[DEBUG] Terminated")
 }
 

@@ -23,7 +23,7 @@ func Connect(ssid, pw string) {
   fmt.Printf("[INFO] PASS: %s\n", pw)
 
   fmt.Println("[DEBUG] Apply netplan config")
-  apply, err := cacis.ExecCmd("netplan apply")
+  apply, err := cacis.ExecCmd("netplan apply", false)
   cacis.Error(err)
   fmt.Println(apply)
   fmt.Println("[DEBUG] Applied netplan config")

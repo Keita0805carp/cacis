@@ -67,11 +67,16 @@ func Error(err error) {
   }
 }
 
-func ExecCmd(cmd string) ([]byte, error) {
+func ExecCmd(cmd string, log bool) ([]byte, error) {
   slice := strings.Split(cmd, " ")
   stdout, err := exec.Command(slice[0], slice[1:]...).Output()
+  if log {
+    fmt.Println(string(stdout))
+    Error(err)
+    return stdout, err
+  } else {
+    return nil, nil
+  }
   //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
-  Error(err)
-  return stdout, err
 }
 
