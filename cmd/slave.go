@@ -24,6 +24,7 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 func slaveAction() (err error) {
     fmt.Println("Debug: This is slave subcommand\n")
     connection.Discover()
+    //connection.Connect()
     //slave.Main()
     return nil
 }

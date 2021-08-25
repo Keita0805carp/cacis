@@ -3,6 +3,7 @@ package connection
 import (
   "fmt"
   "regexp"
+  "strings"
 
   "github.com/keita0805carp/cacis/cacis"
 
@@ -29,9 +30,13 @@ func slave() {
   dev, err := discover(ad)
   cacis.Error(err)
   p := dev.Properties
+  ssid := strings.Replace(p.Address, ":", "", 5)
+  pw := strings.Replace(p.UUIDs[0], "-", "", 4)
   fmt.Printf("Name: %s \n", p.Name)
-  fmt.Printf("Address: %s (=SSID) \n", p.Address)
-  fmt.Printf("UUID: %s (=PASS) \n", p.UUIDs[0])
+  fmt.Printf("Address: %s (=SSID) \n", ssid)
+  fmt.Printf("UUID: %s (=PASS) \n", pw)
+
+  Connect(ssid, pw)
 
 }
 
@@ -55,7 +60,6 @@ func discover(a *adapter.Adapter1) (*device.Device1, error) {
 
     isCacisNode := regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(properties.Alias)
 
-    //TODO regex cacis-xxxxxxxx
     if !isCacisNode {
       continue
     }
