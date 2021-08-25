@@ -2,6 +2,7 @@ package cacis
 
 import (
   "fmt"
+  "log"
   "strings"
   "os/exec"
   "encoding/json"
@@ -63,7 +64,7 @@ func SendImage(p []byte) CacisLayer {
 
 func Error(err error) {
   if err != nil {
-    fmt.Println(err)
+    log.Fatal(err)
   }
 }
 

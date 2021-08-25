@@ -1,7 +1,7 @@
 package cmd
 
 import (
-  "fmt"
+  "log"
   "github.com/keita0805carp/cacis/connection"
   //"github.com/keita0805carp/cacis/master"
 
@@ -22,9 +22,8 @@ func masterCommand(cmd *cobra.Command, args []string) {
 }
 
 func masterAction() (err error) {
-    fmt.Println("Debug: This is master subcommand\n")
+    log.Printf("[Debug] This is master subcommand\n")
     connection.Advertise()
-    //connection.StartHostapd("ssidhoge", "passhoge")
     //master.Main()
     return nil
 }

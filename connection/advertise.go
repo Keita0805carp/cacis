@@ -1,7 +1,7 @@
 package connection
 
 import (
-  "fmt"
+  "log"
   "time"
   "strings"
 
@@ -26,12 +26,12 @@ func Advertise() {
 }
 
 func genUUID() string {
-  fmt.Println("[DEBUG] Generate UUID")
+  log.Println("[Debug] Generate UUID")
   return uuid.New().String()
 }
 
 func initialize() (string, string) {
-  fmt.Println("[DEBUG] Initialize Bluetooth")
+  log.Println("[Debug] Initialize Bluetooth")
 
   adaptersInfo, err := hw.GetAdapters()
   adapterInfo := adaptersInfo[0]
@@ -49,9 +49,9 @@ func initialize() (string, string) {
 }
 
 func advertise(UUID, adapterAddr, adapterId, ssid, pass string) {
-  fmt.Println("[DEBUG] Start Advertise via Bluetooth")
-  fmt.Printf("[INFO] Addr: %s\n", adapterAddr)
-  fmt.Printf("[INFO] UUID: %s\n", UUID)
+  log.Println("[Debug] Start Advertise via Bluetooth")
+  log.Printf("[Info]  Addr: %s\n", adapterAddr)
+  log.Printf("[Info]  UUID: %s\n", UUID)
 
   serviceID := UUID[4:8]
   options := service.AppOptions {
@@ -74,23 +74,17 @@ func advertise(UUID, adapterAddr, adapterId, ssid, pass string) {
   err = app.Run()
   cacis.Error(err)
 
-  fmt.Printf("[INFO] SSID: %s\n", ssid)
-  fmt.Printf("[INFO] PASS: %s\n", pass)
+  log.Printf("[Info]  SSID: %s\n", ssid)
+  log.Printf("[Info]  PASS: %s\n", pass)
 
   timeout := uint32(10) // 10s
   //timeout := uint32(6 * 3600) // 6h
-  fmt.Printf("[DEBUG] Advertising for %ds...\n", timeout)
+  log.Printf("[Debug] Advertising for %ds...\n", timeout)
   cancel, err := app.Advertise(timeout)
   cacis.Error(err)
 
   defer cancel()
   time.Sleep(time.Duration(timeout) * time.Second)
 
-  fmt.Println("[DEBUG] Stop Advertise via Bluetooth")
-}
-
-func Error(err error) {
-  if err != nil {
-    fmt.Println(err)
-  }
+  log.Println("[Debug] Stop Advertise via Bluetooth")
 }

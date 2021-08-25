@@ -1,7 +1,7 @@
 package connection
 
 import (
-  "fmt"
+  "log"
   "regexp"
   "strings"
 
@@ -13,9 +13,7 @@ import (
 )
 
 func Discover() {
-  fmt.Println("ble slave")
   slave()
-  //sockettest()
 }
 
 func slave() {
@@ -25,16 +23,16 @@ func slave() {
   err = ad.FlushDevices()
   cacis.Error(err)
 
-  fmt.Printf("Discovering on %s\n", adapterID)
+  log.Printf("[Debug] Discovering on %s\n", adapterID)
 
   dev, err := discover(ad)
   cacis.Error(err)
   p := dev.Properties
   ssid := strings.Replace(p.Address, ":", "", 5)
   pw := strings.Replace(p.UUIDs[0], "-", "", 4)
-  fmt.Printf("Name: %s \n", p.Name)
-  fmt.Printf("Address: %s (=SSID) \n", ssid)
-  fmt.Printf("UUID: %s (=PASS) \n", pw)
+  log.Printf("[Info]  Name: %s \n", p.Name)
+  log.Printf("[Info]  Address: %s (=SSID) \n", ssid)
+  log.Printf("[Info]  UUID: %s (=PASS) \n", pw)
 
   Connect(ssid, pw)
 
@@ -56,7 +54,7 @@ func discover(a *adapter.Adapter1) (*device.Device1, error) {
 
     properties := dev.Properties
 
-    fmt.Printf("[Debug] Discovered (%s) %s\n", properties.Alias, properties.Address)
+    log.Printf("[Debug] Discovered (%s) %s\n", properties.Alias, properties.Address)
 
     isCacisNode := regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(properties.Alias)
 
