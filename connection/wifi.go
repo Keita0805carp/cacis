@@ -9,7 +9,7 @@ import (
 )
 
 const (
-  netplanConfTemplatePath = "connection/netplan-template.conf"
+  netplanConfTemplatePath = "connection/netplan.conf.template"
   netplanConfPath = "/etc/netplan/60-cacis.yaml"
 )
 
