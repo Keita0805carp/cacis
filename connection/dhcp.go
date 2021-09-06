@@ -1,6 +1,9 @@
 package connection
 
 import (
+  "log"
+  "os"
+  "os/signal"
   "github.com/keita0805carp/cacis/cacis"
 
   "github.com/coredhcp/coredhcp/server"
@@ -24,6 +27,10 @@ var desiredPlugins = []*plugins.Plugin{
 }
 
 func DHCP() {
+  c := make(chan os.Signal, 1)
+  signal.Notify(c, os.Interrupt)
+  log.Println("[Debug] Starting dhcpd...")
+
 	config, err := config.Load(configPath)
   cacis.Error(err)
 	// register plugins
@@ -34,6 +41,10 @@ func DHCP() {
 
   srv, err := server.Start(config)
   cacis.Error(err)
-  err = srv.Wait()
-  cacis.Error(err)
+  log.Println("[Debug] Running dhcpd... (Press Ctrl-C to End)")
+
+  <-c
+
+  log.Println("[Debug] Terminating dhcpd...")
+  srv.Close()
 }
