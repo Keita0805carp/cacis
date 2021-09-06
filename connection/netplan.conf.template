@@ -1,9 +1,7 @@
 network:
     wifis:
        wlan0:
-           dhcp4: false
-           addresses: [10.0.100.2/24]
-           gateway4: 10.0.100.1
+           dhcp4: true
            access-points:
                {{SSID}}:
                    hidden: true
