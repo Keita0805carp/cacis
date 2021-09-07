@@ -11,7 +11,7 @@ import (
 )
 
 const (
-  hostapdConfTemplatePath = "connection/hostapd-template.conf"
+  hostapdConfTemplatePath = "connection/hostapd.conf.template"
   hostapdConfPath = "connection/hostapd.conf"
 )
 
