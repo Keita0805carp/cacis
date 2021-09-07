@@ -1,0 +1,10 @@
+network:
+    wifis:
+       wlan0:
+           dhcp4: true
+           access-points:
+               {{SSID}}:
+                   hidden: true
+                   password: {{PASSWORD}}
+    version: 2
+    renderer: networkd

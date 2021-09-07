@@ -2,14 +2,13 @@ package master
 
 import (
   "fmt"
+  "log"
   "sort"
   "net"
   "time"
   "os"
-  "os/exec"
   "regexp"
   "context"
-  "strings"
 
   "github.com/keita0805carp/cacis/cacis"
 
@@ -51,13 +50,13 @@ func Main() {
 func server() {
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
-  Error(err)
+  cacis.Error(err)
   defer listen.Close()
 
   for {
-    fmt.Printf("Debug: Waiting slave\n\n")
+    log.Printf("[Debug] Waiting slave\n\n")
     conn, err := listen.Accept()
-    Error(err)
+    cacis.Error(err)
     handling(conn)
     conn.Close()
   }
@@ -67,9 +66,9 @@ func handling(conn net.Conn) {
   // Recieve Request from slave
   buf := make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn.Read(buf)
-  Error(err)
+  cacis.Error(err)
 
-  fmt.Printf("Recieve Packet from Slave. len: %d\n", packetLength)
+  log.Printf("[Debug] Recieve Packet from Slave. len: %d\n", packetLength)
   fmt.Println(buf)
   cLayer := cacis.Unmarshal(buf)
   //fmt.Println(string(rl.Payload))
@@ -77,12 +76,12 @@ func handling(conn net.Conn) {
   /// Swtich Type
   if cLayer.Type == 10 {  /// request Components List
 
-    fmt.Println("Debug: Type = 10")
+    log.Println("[Debug] Type = 10")
     sendComponentsList(conn)
 
   } else if cLayer.Type == 20 {  /// request Image
 
-    fmt.Println("Debug: Type = 20")
+    log.Println("[Debug] Type = 20")
     sendImg(conn)
 
   } else if cLayer.Type == 30 {  /// request microk8s snap
@@ -101,43 +100,43 @@ func handling(conn net.Conn) {
     clustering(conn)
 
   } else {
-    fmt.Println("Err: Unknown Type")
+    log.Println("[Error] Unknown Type")
   }
 }
 
 func pullImg(imageName string) {
-  fmt.Printf("\nPulling   %s ...", imageName)
+  log.Printf("\n[Info]  Pulling   %s ...", imageName)
 
   ctx := context.Background()
   client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace("cacis"))
   defer client.Close()
-  Error(err)
+  cacis.Error(err)
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
   }
 
   contents, err := client.Fetch(ctx, imageName, opts...)
-  Error(err)
+  cacis.Error(err)
 
   image := containerd.NewImageWithPlatform(client, contents, platforms.All)
   if image == nil {
-    fmt.Println("Fail to Pull")
+    log.Println("[Error] Fail to Pull")
     }
-  fmt.Printf("\rPulled    %s Completely\n", imageName)
+  log.Printf("\r[Info]  Pulled    %s Completely\n", imageName)
 }
 
 func exportImg(filePath, imageRef string){
-  fmt.Printf("\rExporting %s to %s ...", imageRef, filePath)
+  log.Printf("\r[Info]  Exporting %s to %s ...", imageRef, filePath)
 
   ctx := context.Background()
   client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
-  Error(err)
+  cacis.Error(err)
 
   f, err := os.Create(filePath)
   defer f.Close()
-  Error(err)
+  cacis.Error(err)
 
   imageStore := client.ImageService()
   opts := []archive.ExportOpt{
@@ -146,53 +145,53 @@ func exportImg(filePath, imageRef string){
   }
 
   client.Export(ctx, f, opts...)
-  Error(err)
-  fmt.Printf("\rExported  %s to %s Completely\n", imageRef, filePath)
+  cacis.Error(err)
+  log.Printf("\r[Info]  Exported  %s to %s Completely\n", imageRef, filePath)
 }
 
 func exportAndPullAllImg(){
-  fmt.Printf("Debug: [start] Pull and Export Images\n")
-  fmt.Printf("\nPull %d images for Kubernetes Components\n", len(componentsList))
+  log.Printf("[Debug] start: Pull and Export Images\n")
+  log.Printf("\n[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
     //fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
     pullImg(imageRef)
     exportImg(exportDir + exportFile, imageRef)
   }
-  fmt.Printf("\nDebug: [end] Pull and Export Images\n\n")
+  log.Printf("\n[Debug] end: Pull and Export Images\n\n")
 }
 
 func sendComponentsList(conn net.Conn) {
   /// Send Components List
-  fmt.Printf("\nDebug: [start] Send Components List\n")
+  log.Printf("\n[Debug] start: Send Components List\n")
   cLayer := cacis.SendComponentsList(componentsList)
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  fmt.Print("\nDebug: [end] Send Components List\n")
+  log.Print("\n[Debug] end: Send Components List\n")
 }
 
 func sendImg(conn net.Conn) {
-  fmt.Print("\nDebug: [start] Send Components Images\n")
+  log.Print("\n[Debug] start: Send Components Images\n")
   s := sortKeys(componentsList)
 
   for _, fileName := range s {
     fileBuf := readFileByte(fileName)
 
     /// Send Image
-    fmt.Printf("\rDebug: Sending Image %s ...", fileName)
+    log.Printf("\r[Debug] Sending Image %s ...", fileName)
     cLayer := cacis.SendImage(fileBuf)
     packet := cLayer.Marshal()
     //fmt.Println(cLayer)
     conn.Write(packet)
-    fmt.Printf("\rDebug: Send Image %s Completely\n", fileName)
+    log.Printf("\r[Debug] Send Image %s Completely\n", fileName)
   }
-  fmt.Printf("\nDebug: [end] Send Components Images\n")
+  fmt.Printf("\n[Debug] end: Send Components Images\n")
 }
 
 func snapd() {
   //TODO snapd check
   //TODO snapd install
-  myexec("apt install snapd")
+  cacis.ExecCmd("apt install snapd", false)
 }
 
 func sendSnapd(conn net.Conn) {
@@ -218,7 +217,7 @@ func downloadMicrok8s() {
   //TODO snap install microk8s --classic
   fmt.Printf("Download microk8s via snap\n")
   fmt.Printf("Downloading...")
-  myexec("snap download microk8s --target-directory=" + exportDir)
+  cacis.ExecCmd("snap download microk8s --target-directory=" + exportDir, false)
   fmt.Printf("Download Completely\n")
 }
 
@@ -227,8 +226,8 @@ func installMicrok8s() {
   //TODO snap install microk8s --classic
   fmt.Printf("Install microk8s via snap\n")
   fmt.Printf("Installing...")
-  myexec("snap ack " + exportDir + "microk8s_2346.assert")
-  myexec("snap install " + exportDir + "microk8s_2346.snap" + " --classic")
+  cacis.ExecCmd("snap ack " + exportDir + "microk8s_2346.assert", false)
+  cacis.ExecCmd("snap install " + exportDir + "microk8s_2346.snap" + " --classic", true)
   fmt.Printf("Install Completely\n")
 }
 
@@ -252,14 +251,14 @@ func sendMicrok8sSnap(conn net.Conn) {
 
 func setupMicrok8s() {
   /// if RaspberryPi
-  //myexec("echo \n"cgroup_enable=memory cgroup_memory=1"\n >> /boot/firmware/cmdline.txt")
+  //cacis.ExecCmd("echo \n"cgroup_enable=memory cgroup_memory=1"\n >> /boot/firmware/cmdline.txt")
 }
 
 func clustering(conn net.Conn) {
   fmt.Print("\nDebug: [start] Clustering\n")
   //TODO microk8s enable dns dashboard
-  output, err := myexec("microk8s add-node")
-  Error(err)
+  output, err := cacis.ExecCmd("microk8s add-node", true)
+  cacis.Error(err)
   //fmt.Println(string(output))
   //TODO regex getc command to join node
   regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
@@ -275,17 +274,17 @@ func clustering(conn net.Conn) {
 
 func enableMicrok8s() {
   //TODO microk8s enable dns dashboard
-  myexec("microk8s enable dns dashboard")
+  cacis.ExecCmd("microk8s enable dns dashboard", false)
 }
 
 func getKubeconfig() {
-  myexec("microk8s config")
+  cacis.ExecCmd("microk8s config", true)
 }
 
 func unclustering() {
   //TODO get request
   //TODO get hostname wants to leave
-  myexec("microk8s remove-node cacis-vagrant-slave")
+  cacis.ExecCmd("microk8s remove-node cacis-vagrant-slave", false)
 }
 
 
@@ -296,21 +295,13 @@ func readFileByte(fileName string) []byte {
   fmt.Printf("\nDebug: Read file '%s'\n", fileName)
   //filePath := "./test/hoge1.txt"
   file, err := os.Open(filePath)
-  Error(err)
+  cacis.Error(err)
   fileInfo, err := file.Stat()
-  Error(err)
+  cacis.Error(err)
   fileBuf := make([]byte, fileInfo.Size())
   file.Read(fileBuf)
 
   return fileBuf
-}
-
-func myexec(cmd string) ([]byte, error) {
-  slice := strings.Split(cmd, " ")
-  stdout, err := exec.Command(slice[0], slice[1:]...).Output()
-  //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
-  Error(err)
-  return stdout, err
 }
 
 func sortKeys(m map[string]string) []string {
@@ -328,10 +319,4 @@ func sortKeys(m map[string]string) []string {
   }
   */
   return sorted
-}
-
-func Error(err error) {
-  if err != nil {
-    fmt.Println(err)
-  }
 }

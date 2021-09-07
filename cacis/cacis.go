@@ -2,6 +2,9 @@ package cacis
 
 import (
   "fmt"
+  "log"
+  "strings"
+  "os/exec"
   "encoding/json"
   "encoding/binary"
 )
@@ -89,7 +92,20 @@ func SendClusterInfo(p []byte) CacisLayer {
 
 func Error(err error) {
   if err != nil {
-    fmt.Println(err)
+    log.Fatal(err)
   }
+}
+
+func ExecCmd(cmd string, log bool) ([]byte, error) {
+  slice := strings.Split(cmd, " ")
+  stdout, err := exec.Command(slice[0], slice[1:]...).Output()
+  if log {
+    fmt.Println(string(stdout))
+    Error(err)
+    return stdout, err
+  } else {
+    return nil, nil
+  }
+  //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
 }
 
