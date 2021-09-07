@@ -22,9 +22,10 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 }
 
 func slaveAction() (err error) {
-    log.Printf("[Debug] This is slave subcommand\n")
-    connection.Discover()
-    //connection.Connect()
+    log.Printf("\n[Debug]: Run Main Slave Process\n")
+
+    ssid, pw := connection.GetWifiInfo()
+    connection.Connect(ssid, pw)
     //slave.Main()
     return nil
 }

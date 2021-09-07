@@ -12,11 +12,7 @@ import (
   "github.com/muka/go-bluetooth/bluez/profile/device"
 )
 
-func Discover() {
-  slave()
-}
-
-func slave() {
+func GetWifiInfo() (string, string){
   adapterID := adapter.GetDefaultAdapterID()
   ad, err := adapter.NewAdapter1FromAdapterID(adapterID)
   cacis.Error(err)
@@ -25,7 +21,7 @@ func slave() {
 
   log.Printf("[Debug] Discovering on %s\n", adapterID)
 
-  dev, err := discover(ad)
+  dev, err := discoverBLE(ad)
   cacis.Error(err)
   p := dev.Properties
   ssid := strings.Replace(p.Address, ":", "", 5)
@@ -34,11 +30,10 @@ func slave() {
   log.Printf("[Info]  Address: %s (=SSID) \n", ssid)
   log.Printf("[Info]  UUID: %s (=PASS) \n", pw)
 
-  Connect(ssid, pw)
-
+  return ssid, pw
 }
 
-func discover(a *adapter.Adapter1) (*device.Device1, error) {
+func discoverBLE(a *adapter.Adapter1) (*device.Device1, error) {
   discoverd, cancel, err := api.Discover(a, nil)
   cacis.Error(err)
   defer cancel()

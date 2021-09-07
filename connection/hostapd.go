@@ -4,8 +4,6 @@ import (
   "log"
   "strings"
   "io/ioutil"
-  "os"
-  "os/signal"
 
   "github.com/keita0805carp/cacis/cacis"
 )
@@ -15,7 +13,7 @@ const (
   hostapdConfPath = "connection/hostapd.conf"
 )
 
-func StartHostapd(ssid, pw string) {
+func StartHostapd(cancel chan struct{}, ssid, pw string) {
   genConfig(ssid, pw)
   log.Printf("[Info]  SSID: %s\n", ssid)
   log.Printf("[Info]  PASS: %s\n", pw)
@@ -25,13 +23,9 @@ func StartHostapd(ssid, pw string) {
   log.Println("[Debug] Start hostapd in the Background")
   cacis.ExecCmd("hostapd -B " + hostapdConfPath, false)
 
-  c := make(chan os.Signal, 1)
-  signal.Notify(c, os.Interrupt)
-  log.Println("[Debug] Running hostpad... (Press Ctrl-C to End)")
-
-  <-c
+  <-cancel
   cacis.ExecCmd("killall -q hostapd", false)
-  log.Println("[Debug] Terminated")
+  log.Println("[Debug] Terminated hostapd")
 }
 
 func genConfig(ssid, pw string) {
