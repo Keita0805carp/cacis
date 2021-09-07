@@ -40,9 +40,9 @@ func masterAction() (err error) {
     cancel := make(chan struct{})
     go connection.Advertise(cancel, UUID, adapterAddr, adapterId, ssid, pass)
 
-    //go connection.StartHostapd(cancel, ssid, pass)
+    go connection.StartHostapd(cancel, ssid, pass)
 
-    //go connection.DHCP(cancel)
+    go connection.DHCP(cancel)
 
     //master.Main()
 
