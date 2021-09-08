@@ -3,6 +3,7 @@ package slave
 import (
   "fmt"
   "log"
+  "time"
   "sort"
   "net"
   "os"
@@ -29,13 +30,13 @@ func Main() {
   //requestSnapd()
   //installSnapd()
 
-  //recieveMicrok8sSnap()
-  //installMicrok8sSnap()
+  recieveMicrok8sSnap()
+  installMicrok8sSnap()
 
-  //fmt.Println("wait 3 seconds...")
-  //time.Sleep(5 * time.Second)
-  //setupMicrok8s()
-  //clustering()
+  setupMicrok8s()
+  clustering()
+  fmt.Println("[TEST] wait 30 seconds...")
+  time.Sleep(30 * time.Second)
   unclustering()
 }
 

@@ -36,26 +36,33 @@ var componentsList = map[string]string {
   "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
 }
 
-func Main() {
-  //downloadMicrok8s()
-  //installMicrok8s()
+func Main(cancel chan struct{}) {
+  downloadMicrok8s()
+  installMicrok8s()
   exportAndPullAllImg()
-  server(cancel)
+  go server(cancel)
 }
 
 
-func server() {
+func server(cancel chan struct{}) {
+  log.Println("[Debug] Starting Main Server")
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
   defer listen.Close()
 
   for {
-    log.Printf("[Debug] Waiting slave\n\n")
-    conn, err := listen.Accept()
-    cacis.Error(err)
-    handling(conn)
-    conn.Close()
+    select {
+    default:
+      log.Printf("[Debug] Waiting slave\n\n")
+      conn, err := listen.Accept()
+      cacis.Error(err)
+      handling(conn)
+      conn.Close()
+    case <- cancel:
+      log.Println("[Debug] Terminating Main server...")
+      return
+    }
   }
 }
 
