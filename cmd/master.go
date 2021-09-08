@@ -44,7 +44,7 @@ func masterAction() (err error) {
 
     // go connection.DHCP(cancel)
 
-    master.Main(cancel)
+    master.Main()
 
     <-terminate
     close(cancel)
