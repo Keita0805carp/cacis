@@ -26,12 +26,15 @@ const (
 func Main() {
   //checkSnapd()
 
-  //recieveMicrok8sSnap()
-  //installMicrok8sSnap()
+  recieveMicrok8sSnap()
+  time.Sleep(3 * time.Second)
+  installMicrok8sSnap()
 
+  //fmt.Println("wait 3 seconds...")
+  time.Sleep(5 * time.Second)
   slave()
-
-  //clustering()
+  clustering()
+  //unclustering()
 }
 
 func slave() {
@@ -239,8 +242,25 @@ func clustering() {
 
 func unclustering() {
   //TODO request leave
+  fmt.Println("Debug: [start] UNCLUSTERING")
+  // Socket
+  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  Error(err)
+  defer conn.Close()
+
+  hostname, err := os.Hostname()
+  Error(err)
+
+  // Request Snap files
+  fmt.Println("Debug: Request Clustering")
+  cLayer := cacis.RequestUnclustering([]byte(hostname))
+  packet := cLayer.Marshal()
+  fmt.Println(packet)
+  conn.Write(packet)
+  fmt.Println("Requested\n\n")
   //TODO tell hostname to master
   cacis.ExecCmd("microk8s leave", true)
+  fmt.Println("Debug: [end] UNCLUSTERING")
 }
 
 func removeMicrok8s() {
