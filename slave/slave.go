@@ -5,7 +5,6 @@ import (
   "log"
   "sort"
   "net"
-  "time"
   "os"
   "context"
   "encoding/json"
@@ -30,11 +29,9 @@ func Main() {
   //recieveMicrok8sSnap()
   //installMicrok8sSnap()
 
-  //fmt.Println("wait 3 seconds...")
-  time.Sleep(3 * time.Second)
-  //slave()
+  slave()
 
-  clustering()
+  //clustering()
 }
 
 func slave() {

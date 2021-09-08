@@ -2,8 +2,8 @@ package cmd
 
 import (
   "log"
-  "github.com/keita0805carp/cacis/connection"
-  //"github.com/keita0805carp/cacis/slave"
+  //"github.com/keita0805carp/cacis/connection"
+  "github.com/keita0805carp/cacis/slave"
 
   "github.com/spf13/cobra"
 )
@@ -24,9 +24,9 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 func slaveAction() (err error) {
     log.Printf("\n[Debug]: Run Main Slave Process\n")
 
-    ssid, pw := connection.GetWifiInfo()
-    connection.Connect(ssid, pw)
-    //slave.Main()
+    //ssid, pw := connection.GetWifiInfo()
+    //connection.Connect(ssid, pw)
+    slave.Main()
     return nil
 }
 
