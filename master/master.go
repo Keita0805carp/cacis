@@ -37,23 +37,23 @@ var componentsList = map[string]string {
   "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
 }
 
-func Main() {
+func Main(cancel chan struct{}) {
   //downloadMicrok8s()
   //installMicrok8s()
   //fmt.Println("wait 5 seconds")
   time.Sleep(0 * time.Second)
-  //exportAndPullAllImg()
-  server()
+  exportAndPullAllImg()
+  server(cancel)
 }
 
 
-func server() {
+func server(cancel chan struct{}) {
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
   defer listen.Close()
 
-  for {
+  for (cancel == nil) {
     log.Printf("[Debug] Waiting slave\n\n")
     conn, err := listen.Accept()
     cacis.Error(err)
