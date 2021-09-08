@@ -36,7 +36,7 @@ var componentsList = map[string]string {
   "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
 }
 
-func Main(cancel chan struct{}) {
+func Main() {
   //downloadMicrok8s()
   //installMicrok8s()
   exportAndPullAllImg()
@@ -44,13 +44,13 @@ func Main(cancel chan struct{}) {
 }
 
 
-func server(cancel chan struct{}) {
+func server() {
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
   defer listen.Close()
 
-  for (cancel == nil) {
+  for {
     log.Printf("[Debug] Waiting slave\n\n")
     conn, err := listen.Accept()
     cacis.Error(err)
@@ -83,22 +83,22 @@ func handling(conn net.Conn) {
 
   } else if cLayer.Type == 30 {  /// request microk8s snap
 
-    fmt.Println("Debug: Type = 30")
+    fmt.Println("[Debug] Type = 30")
     sendMicrok8sSnap(conn)
 
   } else if cLayer.Type == 40 {  /// request snapd
 
-    fmt.Println("Debug: Type = 40")
+    fmt.Println("[Debug] Type = 40")
     sendSnapd(conn)
 
   } else if cLayer.Type == 50 {  /// request snapd
 
-    fmt.Println("Debug: Type = 50")
+    fmt.Println("[Debug] Type = 50")
     clustering(conn)
 
   } else if cLayer.Type == 60 {  /// request unclustering
 
-    fmt.Println("Debug: Type = 60")
+    fmt.Println("[Debug] Type = 60")
     unclustering(conn, cLayer)
 
   } else {
@@ -228,14 +228,14 @@ func installMicrok8s() {
   //TODO snap install microk8s --classic
   fmt.Printf("Install microk8s via snap\n")
   fmt.Printf("Installing...")
-  cacis.ExecCmd("snap ack " + exportDir + "microk8s_2346.assert", false)
-  cacis.ExecCmd("snap install " + exportDir + "microk8s_2346.snap" + " --classic", true)
+  cacis.ExecCmd("snap ack " + exportDir + "microk8s_2407.assert", false)
+  cacis.ExecCmd("snap install " + exportDir + "microk8s_2407.snap" + " --classic", true)
   fmt.Printf("Install Completely\n")
 }
 
 func sendMicrok8sSnap(conn net.Conn) {
   fmt.Print("\nDebug: [start] Send Snap files\n")
-  s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
+  s := []string{"microk8s_2407.assert", "microk8s_2407.snap", "core_11420.assert", "core_11420.snap"}
 
   for _, fileName := range s {
     fileBuf := readFileByte(fileName)
@@ -287,13 +287,13 @@ func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
   //TODO get request
   buf := make([]byte, cLayer.Length)
   packetLength, err := conn.Read(buf)
-  Error(err)
+  cacis.Error(err)
   fmt.Printf("Debug: Read Packet PAYLOAD. len: %d\n", packetLength)
   fmt.Println(buf)
   fmt.Println(string(buf))
 
   //TODO get hostname wants to leave
-  cacis.ExecCmd("microk8s remove-node cacis-vagrant-slave", false)
+  cacis.ExecCmd("microk8s remove-node " + string(buf), true)
 }
 
 
