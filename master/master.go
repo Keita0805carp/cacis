@@ -5,7 +5,6 @@ import (
   "log"
   "sort"
   "net"
-  "time"
   "os"
   "regexp"
   "context"
@@ -40,8 +39,6 @@ var componentsList = map[string]string {
 func Main(cancel chan struct{}) {
   //downloadMicrok8s()
   //installMicrok8s()
-  //fmt.Println("wait 5 seconds")
-  time.Sleep(0 * time.Second)
   exportAndPullAllImg()
   server(cancel)
 }
@@ -98,6 +95,11 @@ func handling(conn net.Conn) {
 
     fmt.Println("Debug: Type = 50")
     clustering(conn)
+
+  } else if cLayer.Type == 60 {  /// request unclustering
+
+    fmt.Println("Debug: Type = 60")
+    unclustering(conn, cLayer)
 
   } else {
     log.Println("[Error] Unknown Type")
@@ -281,8 +283,15 @@ func getKubeconfig() {
   cacis.ExecCmd("microk8s config", true)
 }
 
-func unclustering() {
+func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
   //TODO get request
+  buf := make([]byte, cLayer.Length)
+  packetLength, err := conn.Read(buf)
+  Error(err)
+  fmt.Printf("Debug: Read Packet PAYLOAD. len: %d\n", packetLength)
+  fmt.Println(buf)
+  fmt.Println(string(buf))
+
   //TODO get hostname wants to leave
   cacis.ExecCmd("microk8s remove-node cacis-vagrant-slave", false)
 }
