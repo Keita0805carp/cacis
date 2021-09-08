@@ -287,7 +287,7 @@ func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
   //TODO get request
   buf := make([]byte, cLayer.Length)
   packetLength, err := conn.Read(buf)
-  Error(err)
+  cacis.Error(err)
   fmt.Printf("Debug: Read Packet PAYLOAD. len: %d\n", packetLength)
   fmt.Println(buf)
   fmt.Println(string(buf))

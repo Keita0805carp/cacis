@@ -24,20 +24,22 @@ const (
 )
 
 func Main() {
+  //TODO
   //checkSnapd()
+  //requestSnapd()
+  //installSnapd()
 
-  recieveMicrok8sSnap()
-  time.Sleep(3 * time.Second)
-  installMicrok8sSnap()
+  //recieveMicrok8sSnap()
+  //installMicrok8sSnap()
 
   //fmt.Println("wait 3 seconds...")
-  time.Sleep(5 * time.Second)
-  slave()
-  clustering()
-  //unclustering()
+  //time.Sleep(5 * time.Second)
+  //setupMicrok8s()
+  //clustering()
+  unclustering()
 }
 
-func slave() {
+func setupMicrok8s() {
   componentsList := recieveComponentsList()
   //fmt.Println(componentsList)
   // componentsList := map[string]string {
@@ -84,7 +86,7 @@ func recieveComponentsList() map[string]string {
   //fmt.Println(cLayer)
   cLayer.Payload = loadPayload(conn, cLayer.Length)
 
-  log.Printf("\r[Debug] Completed  %d\n", len(cLayer.Payload))
+  log.Printf("\r[Debug] Completed  %d", len(cLayer.Payload))
 
   var tmp map[string]string
   err = json.Unmarshal(cLayer.Payload, &tmp)
@@ -166,7 +168,7 @@ func snapd() {
   packet := cLayer.Marshal()
   fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Requested\n\n")
+  fmt.Printf("Requested\n\n")
 
   recieveFile(conn, "snapd.zip")
 
@@ -178,7 +180,7 @@ func snapd() {
 
 func recieveMicrok8sSnap() {
   fmt.Println("Debug: [start] RECIEVE SNAP FILES")
-  s := []string{"microk8s_2346.assert", "microk8s_2346.snap", "core_11420.assert", "core_11420.snap"}
+  s := []string{"microk8s_2407.assert", "microk8s_2407.snap", "core_11420.assert", "core_11420.snap"}
   // Socket
   conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -190,7 +192,7 @@ func recieveMicrok8sSnap() {
   packet := cLayer.Marshal()
   fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Requested\n\n")
+  fmt.Printf("Requested\n\n")
 
   for _, fileName := range s {
     recieveFile(conn, fileName)
@@ -203,8 +205,8 @@ func installMicrok8sSnap() {
   fmt.Printf("Install microk8s via snap\n")
   fmt.Printf("Installing...")
   //cacis.ExecCmd("snap install microk8s --classic")
-  cacis.ExecCmd("snap ack " + importDir + "microk8s_2346.assert", false)
-  cacis.ExecCmd("snap install " + importDir + "microk8s_2346.snap" + " --classic", false)
+  cacis.ExecCmd("snap ack " + importDir + "microk8s_2407.assert", false)
+  cacis.ExecCmd("snap install " + importDir + "microk8s_2407.snap" + " --classic", false)
 }
 
 func clustering() {
@@ -245,11 +247,11 @@ func unclustering() {
   fmt.Println("Debug: [start] UNCLUSTERING")
   // Socket
   conn, err := net.Dial("tcp", masterIP+":"+masterPort)
-  Error(err)
+  cacis.Error(err)
   defer conn.Close()
 
   hostname, err := os.Hostname()
-  Error(err)
+  cacis.Error(err)
 
   // Request Snap files
   fmt.Println("Debug: Request Clustering")
@@ -257,7 +259,7 @@ func unclustering() {
   packet := cLayer.Marshal()
   fmt.Println(packet)
   conn.Write(packet)
-  fmt.Println("Requested\n\n")
+  fmt.Printf("Requested\n\n")
   //TODO tell hostname to master
   cacis.ExecCmd("microk8s leave", true)
   fmt.Println("Debug: [end] UNCLUSTERING")
@@ -305,8 +307,8 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
     cacis.Error(err)
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
-    log.Printf("\r[Debug] recieving...")
-    log.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
+    //log.Printf("\r[Debug] recieving...")
+    fmt.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
   }
   return packet
 }
