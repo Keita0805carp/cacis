@@ -185,7 +185,6 @@ func sendImg(conn net.Conn) {
 
   for _, fileName := range s {
     fileBuf := readFileByte(fileName)
-
     /// Send Image
     log.Printf("\r[Debug] Sending Image %s ...", fileName)
     cLayer := cacis.SendImage(fileBuf)

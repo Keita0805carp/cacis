@@ -2,8 +2,9 @@ package cmd
 
 import (
   "log"
-  "github.com/keita0805carp/cacis/connection"
+
   "github.com/keita0805carp/cacis/slave"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/spf13/cobra"
 )
@@ -27,6 +28,7 @@ func slaveAction() (err error) {
     ssid, pw := connection.GetWifiInfo()
     connection.Connect(ssid, pw)
     slave.Main()
+
     return nil
 }
 

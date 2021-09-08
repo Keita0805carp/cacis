@@ -87,7 +87,7 @@ func recieveComponentsList() map[string]string {
   //fmt.Println(cLayer)
   cLayer.Payload = loadPayload(conn, cLayer.Length)
 
-  log.Printf("\r[Debug] Completed  %d", len(cLayer.Payload))
+  log.Printf("\r[Debug] Completed  %d\n", len(cLayer.Payload))
 
   var tmp map[string]string
   err = json.Unmarshal(cLayer.Payload, &tmp)
@@ -330,4 +330,3 @@ func sortKeys(m map[string]string) []string {
   */
   return sorted
 }
-
