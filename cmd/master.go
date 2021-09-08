@@ -7,7 +7,7 @@ import (
   "time"
   "strings"
   "github.com/keita0805carp/cacis/connection"
-  //"github.com/keita0805carp/cacis/master"
+  "github.com/keita0805carp/cacis/master"
 
   "github.com/spf13/cobra"
 )
@@ -40,11 +40,11 @@ func masterAction() (err error) {
     cancel := make(chan struct{})
     go connection.Advertise(cancel, UUID, adapterAddr, adapterId, ssid, pass)
 
-    go connection.StartHostapd(cancel, ssid, pass)
+    // go connection.StartHostapd(cancel, ssid, pass)
 
-    go connection.DHCP(cancel)
+    // go connection.DHCP(cancel)
 
-    //master.Main()
+    master.Main(cancel)
 
     <-terminate
     close(cancel)
