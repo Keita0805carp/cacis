@@ -35,7 +35,7 @@ func Main() {
   setupMicrok8s()
   clustering()
   fmt.Println("[TEST] wait 30 seconds...")
-  time.Sleep(30 * time.Second)
+  time.Sleep(60 * time.Second)
   unclustering()
 }
 
@@ -186,7 +186,7 @@ func unclustering() {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  fmt.Printf("Requested\n\n")
+  fmt.Printf("Requested. Leaving...\n")
   cacis.ExecCmd("microk8s leave", true)
   log.Println("[Debug] End UNCLUSTERING")
 }
