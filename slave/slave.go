@@ -23,20 +23,22 @@ const (
 )
 
 func Main() {
-  //TODO checkSnapd()
+  //TODO? checkSnapd()
   //requestSnapd()
   //installSnapd()
 
   if !cacis.IsCommandAvailable("microk8s") {
     recieveMicrok8s()
     installMicrok8s()
+    setupMicrok8s()
   }
 
-  setupMicrok8s()
+  waitReadyMicrok8s()
   clustering()
   fmt.Println("[TEST] wait 30 seconds...")
   time.Sleep(60 * time.Second)
   unclustering()
+  //TODO remove microk8s
 }
 
 func setupMicrok8s() {
@@ -223,7 +225,7 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
     //log.Printf("\r[Debug] recieving...")
-    fmt.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
+    fmt.Printf("\r[Info]  Completed  %d  of %d\n", len(packet), int(targetBytes))
   }
   return packet
 }

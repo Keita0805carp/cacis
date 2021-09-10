@@ -3,6 +3,7 @@ package connection
 import (
   "os"
   "log"
+  "time"
   "strings"
   "io/ioutil"
 
@@ -22,6 +23,7 @@ func Connect(ssid, pw string) {
   log.Println("[Debug] Apply netplan config")
   cacis.ExecCmd("netplan apply", false)
   log.Println("[Debug] Applied netplan config")
+  time.Sleep(10 * time.Second)
 }
 
 func genNetplanConfig(ssid, pw string) {

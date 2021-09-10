@@ -50,6 +50,7 @@ func server(cancel chan struct{}) {
       conn.Close()
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
+      cacis.ExecCmd("microk8s stop", false)
       return
     }
   }
@@ -187,11 +188,9 @@ func sendImg(conn net.Conn) {
 
 func clustering(conn net.Conn) {
   log.Print("\nDebug: [start] Clustering\n")
-  //TODO microk8s enable dns dashboard
-  output, err := cacis.ExecCmd("microk8s add-node", true)
+  output, err := cacis.ExecCmd("microk8s add-node", false)
   cacis.Error(err)
   //fmt.Println(string(output))
-  //TODO regex getc command to join node
   regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
   joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
 
@@ -205,7 +204,7 @@ func clustering(conn net.Conn) {
 
 func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
   log.Printf("\nDebug: [start] Unclustering\n")
-  //TODO get request
+
   buf := make([]byte, cLayer.Length)
   packetLength, err := conn.Read(buf)
   cacis.Error(err)

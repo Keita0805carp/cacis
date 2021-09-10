@@ -59,19 +59,16 @@ func recieveMicrok8s() {
 
 func installMicrok8s() {
   log.Printf("Install microk8s via snap\n")
-  if cacis.IsCommandAvailable("microk8s") {
-    log.Printf("[Debug] Already installed\n")
-    return 
-  } else {
-    log.Printf("Install microk8s via snap\n")
-    log.Printf("Installing...")
-    cacis.ExecCmd("snap ack " + targetDir + "microk8s_2347.assert", false)
-    cacis.ExecCmd("snap install " + targetDir + "microk8s_2347.snap" + " --classic", true)
-    log.Printf("[Debug] Installed\n")
-    log.Printf("[Debug] Waiting for ready\n")
-    cacis.ExecCmd("microk8s status --wait-ready", false)
-    log.Printf("[Debug] Install Completely\n")
-  }
+  log.Printf("Installing...")
+  cacis.ExecCmd("snap ack " + targetDir + "microk8s_2347.assert", false)
+  cacis.ExecCmd("snap install " + targetDir + "microk8s_2347.snap" + " --classic", true)
+  log.Printf("[Debug] Installed\n")
+}
+
+func waitReadyMicrok8s() {
+  log.Printf("[Debug] Waiting for ready\n")
+  cacis.ExecCmd("microk8s status --wait-ready", false)
+  log.Printf("[Debug] Microk8s is Ready\n")
 }
 
 func removeMicrok8s() {
