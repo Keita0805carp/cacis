@@ -6,9 +6,9 @@ import (
   "os/signal"
   "time"
   "strings"
-  "github.com/keita0805carp/cacis/connection"
-  "github.com/keita0805carp/cacis/master"
 
+  "github.com/keita0805carp/cacis/master"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/spf13/cobra"
 )

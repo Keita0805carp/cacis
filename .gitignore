@@ -1,6 +1,7 @@
 go.sum
 test/
 *.img
-snapd/
-master-vol/
-slave-vol/
+*.conf
+*.log
+tmp
+main
