@@ -7,8 +7,8 @@ import (
   "github.com/keita0805carp/cacis/cacis"
 )
 
-func snapd() {
-  //TODO
+func installSnapd() {
+  log.Println("[Debug] Check Snap")
   if cacis.IsCommandAvailable("snap") {
     /// if debian(raspberry pi os)
       //recieve zip
@@ -22,7 +22,7 @@ func snapd() {
   cacis.Error(err)
   defer conn.Close()
 
-  log.Println("[Debug] Request snapd package")
+  log.Println("[Debug] Request snapd")
   cLayer := cacis.RequestSnapd()
   packet := cLayer.Marshal()
   //fmt.Println(packet)
@@ -37,9 +37,8 @@ func snapd() {
   cacis.ExecCmd("snap install core", false)
 }
 
-func recieveMicrok8sSnap() {
+func recieveMicrok8s() {
   log.Println("[Debug] Start RECIEVE SNAP FILES")
-  s := []string{"microk8s_2407.assert", "microk8s_2407.snap", "core_11420.assert", "core_11420.snap"}
   // Socket
   conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -52,7 +51,7 @@ func recieveMicrok8sSnap() {
   conn.Write(packet)
   log.Printf("Requested\n\n")
 
-  for _, fileName := range s {
+  for _, fileName := range cacis.Microk8sSnaps {
     recieveFile(conn, fileName)
   }
   log.Println("[Debug] End RECIEVE SNAP FILES")

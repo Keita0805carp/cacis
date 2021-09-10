@@ -27,7 +27,7 @@ func Main() {
   //requestSnapd()
   //installSnapd()
 
-  recieveMicrok8sSnap()
+  recieveMicrok8s()
   installMicrok8s()
 
   setupMicrok8s()

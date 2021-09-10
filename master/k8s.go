@@ -8,9 +8,12 @@ import (
   "github.com/keita0805carp/cacis/cacis"
 )
 
-func snapd() {
-  //TODO snapd check
-  //TODO snapd install
+func installSnapd() {
+  log.Printf("Install snap via apt\n")
+  if cacis.IsCommandAvailable("snap") {
+    log.Printf("[Debug] Already installed\n")
+    return
+  }
   cacis.ExecCmd("apt install snapd", false)
 }
 
@@ -32,6 +35,7 @@ func sendSnapd(conn net.Conn) {
   log.Print("\n[Debug] End Send Snapd\n")
 }
 
+
 func downloadMicrok8s() {
   log.Printf("[Debug] Download microk8s via snap\n")
   log.Printf("[Debug] Downloading...\n")
@@ -39,11 +43,10 @@ func downloadMicrok8s() {
   log.Printf("[Debug] Download Completely\n")
 }
 
-func sendMicrok8sSnap(conn net.Conn) {
+func sendMicrok8s(conn net.Conn) {
   log.Print("\n[Debug] Start Send Snap files\n")
-  s := []string{"microk8s_2347.assert", "microk8s_2347.snap", "core_11420.assert", "core_11420.snap"}
 
-  for _, fileName := range s {
+  for _, fileName := range cacis.Microk8sSnaps {
     fileBuf := readFileByte(fileName)
 
     /// Send Image

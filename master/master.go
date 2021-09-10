@@ -80,14 +80,14 @@ func handling(conn net.Conn) {
   } else if cLayer.Type == 30 {  /// request microk8s snap
 
     log.Println("[Debug] Type = 30")
-    sendMicrok8sSnap(conn)
+    sendMicrok8s(conn)
 
   } else if cLayer.Type == 40 {  /// request snapd
 
     log.Println("[Debug] Type = 40")
     sendSnapd(conn)
 
-  } else if cLayer.Type == 50 {  /// request snapd
+  } else if cLayer.Type == 50 {  /// request clustering
 
     log.Println("[Debug] Type = 50")
     clustering(conn)

@@ -21,4 +21,6 @@ var (
     "metrics-server.img"  : "k8s.gcr.io/metrics-server-arm64:v0.3.6",
     "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
   }
+  Microk8sSnaps = []string{"microk8s_2347.assert", "microk8s_2347.snap"}
+  Snapd = []string{"core_11420.assert", "core_11420.snap"}
 )
