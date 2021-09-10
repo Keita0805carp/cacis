@@ -7,7 +7,7 @@ const (
   ContainerdSock = "/var/snap/microk8s/common/run/containerd.sock"
   ContainerdNameSpace = "k8s.io"
   //containerdNameSpace = "cacis"
-
+  ConfigPath = "./connection/dhcp.conf"
 )
 
 var (
