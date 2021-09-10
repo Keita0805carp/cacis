@@ -27,8 +27,10 @@ func Main() {
   //requestSnapd()
   //installSnapd()
 
-  recieveMicrok8s()
-  installMicrok8s()
+  if !cacis.IsCommandAvailable("microk8s") {
+    recieveMicrok8s()
+    installMicrok8s()
+  }
 
   setupMicrok8s()
   clustering()
