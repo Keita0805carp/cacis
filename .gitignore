@@ -1,3 +1,7 @@
 go.sum
 test/
 *.img
+*.conf
+*.log
+tmp
+main

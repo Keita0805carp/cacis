@@ -1,11 +1,11 @@
 package master
 
 import (
+  "os"
   "fmt"
   "log"
-  "sort"
   "net"
-  "os"
+  "regexp"
   "context"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -16,41 +16,43 @@ import (
 )
 
 const (
-  exportDir = "./master-vol/"
-  //containerdSock = "/run/containerd/containerd.sock"
-  containerdSock = "/var/snap/microk8s/common/run/containerd.sock"
-  containerdNameSpace = "cacis"
+  masterIP = cacis.MasterIP
+  masterPort = cacis.MasterPort
+  targetDir = cacis.TargetDir
+  containerdSock = cacis.ContainerdSock
+  containerdNameSpace = cacis.ContainerdNameSpace
+)
+var (
+  componentsList = cacis.ComponentsList
 )
 
-var componentsList = map[string]string {
-  "cni.img"             : "docker.io/calico/cni:v3.13.2",
-  "pause.img"           : "k8s.gcr.io/pause:3.1",
-  "kube-controllers.img": "docker.io/calico/kube-controllers:v3.13.2",
-  "pod2daemon.img"      : "docker.io/calico/pod2daemon-flexvol:v3.13.2",
-  "node.img"            : "docker.io/calico/node:v3.13.2",
-  "coredns.img"         : "docker.io/coredns/coredns:1.8.0",
-  "metrics-server.img"  : "k8s.gcr.io/metrics-server-arm64:v0.3.6",
-  "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
-}
-
-func Main() {
+func Main(cancel chan struct{}) {
+  downloadMicrok8s()
+  installMicrok8s()
   exportAndPullAllImg()
-  server()
+  go server(cancel)
 }
 
-
-func server() {
+func server(cancel chan struct{}) {
+  log.Println("[Debug] Starting Main Server")
   // Socket
-  listen, err := net.Listen("tcp", "localhost:27001")
+  listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
   defer listen.Close()
 
   for {
-    log.Printf("[Debug] Waiting slave\n\n")
-    conn, err := listen.Accept()
-    cacis.Error(err)
-    handling(conn)
-    conn.Close()
+    select {
+    default:
+      log.Printf("[Debug] Waiting slave\n\n")
+      conn, err := listen.Accept()
+      cacis.Error(err)
+      handling(conn)
+      conn.Close()
+    case <- cancel:
+      log.Println("[Debug] Terminating Main server...")
+      cacis.ExecCmd("microk8s stop", false)
+      return
+    }
   }
 }
 
@@ -76,6 +78,26 @@ func handling(conn net.Conn) {
     log.Println("[Debug] Type = 20")
     sendImg(conn)
 
+  } else if cLayer.Type == 30 {  /// request microk8s snap
+
+    log.Println("[Debug] Type = 30")
+    sendMicrok8s(conn)
+
+  } else if cLayer.Type == 40 {  /// request snapd
+
+    log.Println("[Debug] Type = 40")
+    sendSnapd(conn)
+
+  } else if cLayer.Type == 50 {  /// request clustering
+
+    log.Println("[Debug] Type = 50")
+    clustering(conn)
+
+  } else if cLayer.Type == 60 {  /// request unclustering
+
+    log.Println("[Debug] Type = 60")
+    unclustering(conn, cLayer)
+
   } else {
     log.Println("[Error] Unknown Type")
   }
@@ -85,7 +107,7 @@ func pullImg(imageName string) {
   log.Printf("\n[Info]  Pulling   %s ...", imageName)
 
   ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace("cacis"))
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   cacis.Error(err)
 
@@ -107,7 +129,7 @@ func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exporting %s to %s ...", imageRef, filePath)
 
   ctx := context.Background()
-  client, err := containerd.New("/run/containerd/containerd.sock", containerd.WithDefaultNamespace(containerdNameSpace))
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   cacis.Error(err)
 
@@ -130,9 +152,9 @@ func exportAndPullAllImg(){
   log.Printf("[Debug] start: Pull and Export Images\n")
   log.Printf("\n[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
-    //fmt.Printf("%s : %s\n", exportDir + exportFile, imageRef)
+    //fmt.Printf("%s : %s\n", exporttDir + exportFile, imageRef)
     pullImg(imageRef)
-    exportImg(exportDir + exportFile, imageRef)
+    exportImg(targetDir + exportFile, imageRef)
   }
   log.Printf("\n[Debug] end: Pull and Export Images\n\n")
 }
@@ -149,21 +171,10 @@ func sendComponentsList(conn net.Conn) {
 
 func sendImg(conn net.Conn) {
   log.Print("\n[Debug] start: Send Components Images\n")
-  s := sortKeys(componentsList)
+  s := cacis.SortKeys(componentsList)
 
   for _, fileName := range s {
-    /// File
-    filePath := exportDir + fileName
-
-    log.Printf("\n[Debug] Read: file '%s'\n", fileName)
-    //filePath := "./test/hoge1.txt"
-    file, err := os.Open(filePath)
-    cacis.Error(err)
-    fileInfo, err := file.Stat()
-    cacis.Error(err)
-    fileBuf := make([]byte, fileInfo.Size())
-    file.Read(fileBuf)
-
+    fileBuf := readFileByte(fileName)
     /// Send Image
     log.Printf("\r[Debug] Sending Image %s ...", fileName)
     cLayer := cacis.SendImage(fileBuf)
@@ -172,25 +183,51 @@ func sendImg(conn net.Conn) {
     conn.Write(packet)
     log.Printf("\r[Debug] Send Image %s Completely\n", fileName)
   }
-  fmt.Printf("\n[Debug] end: Send Components Images\n")
+  log.Printf("\n[Debug] end: Send Components Images\n")
 }
 
-func microk8s_enable(){
+func clustering(conn net.Conn) {
+  log.Print("\nDebug: [start] Clustering\n")
+  output, err := cacis.ExecCmd("microk8s add-node", false)
+  cacis.Error(err)
+  //fmt.Println(string(output))
+  regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
+  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
+
+  /// Send CLuster Info
+  cLayer := cacis.SendClusterInfo([]byte(joinCmd))
+  packet := cLayer.Marshal()
+  //fmt.Println(cLayer)
+  conn.Write(packet)
+  log.Printf("\nDebug: [end] Clustering\n")
 }
 
-func sortKeys(m map[string]string) []string {
-  ///sort
-  sorted := make([]string, len(m))
-  index := 0
-  for key := range m {
-        sorted[index] = key
-        index++
-    }
-    sort.Strings(sorted)
-  /*
-  for _, exportFile := range exportFileNameSort {
-    fmt.Printf("%-20s : %s\n", exportFile, componentsList[exportFile])
-  }
-  */
-  return sorted
+func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
+  log.Printf("\nDebug: [start] Unclustering\n")
+
+  buf := make([]byte, cLayer.Length)
+  packetLength, err := conn.Read(buf)
+  cacis.Error(err)
+  log.Printf("[Debug] Read Packet PAYLOAD. len: %d\n", packetLength)
+  //fmt.Println(string(buf))
+
+  cacis.ExecCmd("microk8s remove-node " + string(buf), true)
+  log.Printf("\nDebug: [end] Unclustering\n")
 }
+
+func readFileByte(fileName string) []byte {
+  /// File
+  filePath := targetDir + fileName
+
+  log.Printf("\n[Debug] Read file '%s'\n", fileName)
+  //filePath := "./test/hoge1.txt"
+  file, err := os.Open(filePath)
+  cacis.Error(err)
+  fileInfo, err := file.Stat()
+  cacis.Error(err)
+  fileBuf := make([]byte, fileInfo.Size())
+  file.Read(fileBuf)
+
+  return fileBuf
+}
+

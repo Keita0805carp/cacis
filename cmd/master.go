@@ -6,8 +6,9 @@ import (
   "os/signal"
   "time"
   "strings"
+
+  "github.com/keita0805carp/cacis/master"
   "github.com/keita0805carp/cacis/connection"
-  //"github.com/keita0805carp/cacis/master"
 
   "github.com/spf13/cobra"
 )
@@ -44,7 +45,7 @@ func masterAction() (err error) {
 
     go connection.DHCP(cancel)
 
-    //master.Main()
+    master.Main(cancel)
 
     <-terminate
     close(cancel)
