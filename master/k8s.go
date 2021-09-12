@@ -4,6 +4,7 @@ import (
   "fmt"
   "log"
   "net"
+  "os"
 
   "github.com/keita0805carp/cacis/cacis"
 )
@@ -81,7 +82,16 @@ func enableMicrok8s() {
   cacis.ExecCmd("microk8s enable dns dashboard", false)
 }
 
-func getKubeconfig() {
-  cacis.ExecCmd("microk8s config", true)
+func GetKubeconfig() (string, error) {
+  config, err := cacis.ExecCmd("microk8s config", false)
+  return string(config), err
+}
+
+func ExportKubeconfig(path string) (error) {
+  config, err := GetKubeconfig()
+  file, err := os.Create(path)
+  cacis.Error(err)
+  _, err = file.WriteString(config)
+  return err
 }
 
