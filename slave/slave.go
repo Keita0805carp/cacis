@@ -6,10 +6,10 @@ import (
   "log"
   "net"
   "time"
-  "context"
   "encoding/json"
 
   "github.com/keita0805carp/cacis/cacis"
+  "github.com/keita0805carp/cacis/master"
 
   "github.com/containerd/containerd"
 )
@@ -35,7 +35,7 @@ func Main() {
 
   waitReadyMicrok8s()
   clustering()
-  fmt.Println("[TEST] wait 30 seconds...")
+  fmt.Println("[TEST] wait 60 seconds...")
   time.Sleep(60 * time.Second)
   unclustering()
   //TODO remove microk8s
@@ -115,10 +115,7 @@ func recieveImg(s []string) {
 func importImg(imageName, filePath string) {
   log.Println("[Debug] Importing " + imageName + " from " + filePath + "...")
 
-  ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
-  defer client.Close()
-  cacis.Error(err)
+  ctx, client := master.ContainerdInit()
 
   f, err := os.Open(filePath)
   defer f.Close()

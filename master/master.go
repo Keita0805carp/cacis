@@ -103,18 +103,11 @@ func handling(conn net.Conn) {
   }
 }
 
-func containerdInit() (context.Context, *containerd.Client) {
-  ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
-  defer client.Close()
-  cacis.Error(err)
-  return ctx, client
-}
-
 func getImgList() {
   log.Printf("\n[Info] Show images list")
 
-  ctx, client := containerdInit()
+  ctx, client := ContainerdInit()
+  defer client.Close()
 
   images, err := client.ListImages(ctx)
   cacis.Error(err)
@@ -127,7 +120,8 @@ func getImgList() {
 func pullImg(imageName string) {
   log.Printf("\n[Info]  Pulling   %s ...", imageName)
 
-  ctx, client := containerdInit()
+  ctx, client := ContainerdInit()
+  defer client.Close()
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
@@ -146,7 +140,8 @@ func pullImg(imageName string) {
 func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exporting %s to %s ...", imageRef, filePath)
 
-  ctx, client := containerdInit()
+  ctx, client := ContainerdInit()
+  defer client.Close()
 
   f, err := os.Create(filePath)
   defer f.Close()
@@ -244,5 +239,12 @@ func readFileByte(fileName string) []byte {
   file.Read(fileBuf)
 
   return fileBuf
+}
+
+func ContainerdInit() (context.Context, *containerd.Client) {
+  ctx := context.Background()
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
+  cacis.Error(err)
+  return ctx, client
 }
 
