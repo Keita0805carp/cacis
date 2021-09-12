@@ -79,7 +79,7 @@ func installMicrok8s() {
 }
 
 func enableMicrok8s() {
-  cacis.ExecCmd("microk8s enable dns dashboard", false)
+  cacis.ExecCmd("microk8s enable registry dns dashboard", false)
 }
 
 func GetKubeconfig() (string, error) {
