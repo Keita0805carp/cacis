@@ -103,13 +103,31 @@ func handling(conn net.Conn) {
   }
 }
 
-func pullImg(imageName string) {
-  log.Printf("\n[Info]  Pulling   %s ...", imageName)
-
+func containerdInit() (context.Context, *containerd.Client) {
   ctx := context.Background()
   client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
   defer client.Close()
   cacis.Error(err)
+  return ctx, client
+}
+
+func getImgList() {
+  log.Printf("\n[Info] Show images list")
+
+  ctx, client := containerdInit()
+
+  images, err := client.ListImages(ctx)
+  cacis.Error(err)
+  for _, image := range images {
+    fmt.Println(image.Name())
+  }
+  return 
+}
+
+func pullImg(imageName string) {
+  log.Printf("\n[Info]  Pulling   %s ...", imageName)
+
+  ctx, client := containerdInit()
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
@@ -128,10 +146,7 @@ func pullImg(imageName string) {
 func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exporting %s to %s ...", imageRef, filePath)
 
-  ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
-  defer client.Close()
-  cacis.Error(err)
+  ctx, client := containerdInit()
 
   f, err := os.Create(filePath)
   defer f.Close()

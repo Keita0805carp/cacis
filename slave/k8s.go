@@ -60,8 +60,8 @@ func recieveMicrok8s() {
 func installMicrok8s() {
   log.Printf("Install microk8s via snap\n")
   log.Printf("Installing...")
-  cacis.ExecCmd("snap ack " + targetDir + "microk8s_2347.assert", false)
-  cacis.ExecCmd("snap install " + targetDir + "microk8s_2347.snap" + " --classic", true)
+  cacis.ExecCmd("snap ack " + targetDir + cacis.Microk8sSnaps[0], false)
+  cacis.ExecCmd("snap install " + targetDir + cacis.Microk8sSnaps[1] + " --classic", true)
   log.Printf("[Debug] Installed\n")
 }
 
