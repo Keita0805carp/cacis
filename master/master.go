@@ -103,7 +103,7 @@ func handling(conn net.Conn) {
   }
 }
 
-func getImgList() {
+func getImgList() []string {
   log.Printf("\n[Info] Show images list")
 
   ctx, client := ContainerdInit()
@@ -111,10 +111,11 @@ func getImgList() {
 
   images, err := client.ListImages(ctx)
   cacis.Error(err)
-  for _, image := range images {
-    fmt.Println(image.Name())
+  imagesName := make([]string, len(images))
+  for i, image := range images {
+    imagesName[i] = image.Name()
   }
-  return 
+  return imagesName
 }
 
 func pullImg(imageName string) {
