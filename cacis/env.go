@@ -20,6 +20,8 @@ var (
     "coredns.img"         : "docker.io/coredns/coredns:1.8.0",
     "metrics-server.img"  : "k8s.gcr.io/metrics-server-arm64:v0.3.6",
     "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
+    "hostpath-arm64.img"  : "docker.io/cdkbot/hostpath-provisioner-arm64:1.0.0",
+    "registry-arm64.img"  : "docker.io/cdkbot/registry-arm64:2.6",
   }
   Microk8sSnaps = []string{"microk8s_2347.assert", "microk8s_2347.snap"}
   Snapd = []string{"core_11420.assert", "core_11420.snap"}
