@@ -82,7 +82,7 @@ func recieveComponentsList() map[string]string {
   log.Printf("[Debug] Read Packet PAYLOAD\n")
   cLayer.Payload = loadPayload(conn, cLayer.Length)
 
-  log.Printf("\r[Debug] Completed  %d\n", len(cLayer.Payload))
+  log.Printf("\r\n[Debug] Completed  %d\n", len(cLayer.Payload))
 
   var tmpList map[string]string
   err = json.Unmarshal(cLayer.Payload, &tmpList)
@@ -222,7 +222,7 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
     recievedBytes += packetLength
     packet = append(packet, buf[:packetLength]...)
     //log.Printf("\r[Debug] recieving...")
-    fmt.Printf("\r[Info]  Completed  %d  of %d\n", len(packet), int(targetBytes))
+    fmt.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
   }
   return packet
 }

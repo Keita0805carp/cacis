@@ -79,7 +79,9 @@ func installMicrok8s() {
 }
 
 func enableMicrok8s() {
+  log.Println("enable add-on...")
   cacis.ExecCmd("microk8s enable registry dns dashboard", false)
+  log.Println("enabled add-on")
 }
 
 func GetKubeconfig() (string, error) {
