@@ -19,6 +19,7 @@ var (
 
   masterCmd = &cobra.Command{
     Use: "master",
+    Short: "Run Master Process",
     Run: masterCommand,
   }
 )
