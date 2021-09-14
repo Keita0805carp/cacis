@@ -47,8 +47,7 @@ func Main(cancel chan struct{}) {
       log.Printf("[Debug] Waiting slave\n\n")
       conn, err := listen.Accept()
       cacis.Error(err)
-      handling(conn)
-      conn.Close()
+      go handling(conn)
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
       cacis.ExecCmd("microk8s stop", false)
@@ -102,6 +101,7 @@ func handling(conn net.Conn) {
   } else {
     log.Println("[Error] Unknown Type")
   }
+  conn.Close()
 }
 
 func getImgList() []string {
