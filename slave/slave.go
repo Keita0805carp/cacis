@@ -96,7 +96,7 @@ func recieveImg(s []string) {
   log.Printf("[Debug] Requested\n\n")
 
   for _, fileName := range s {
-    go recieveFile(conn, fileName)
+    recieveFile(conn, fileName)
   }
   log.Printf("[Debug] end: RECIEVE COMPONENT IMAGES\n")
 }

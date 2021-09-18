@@ -34,7 +34,7 @@ func masterAction() (err error) {
   log.Printf("\n[Debug]: Run Master Process\n")
 
   if main {
-    log.Printf("\n[Debug]: Main Mode\n")
+    log.Printf("[Debug]: Main Mode\n")
     terminate := make(chan os.Signal, 1)
     signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
     cancel := make(chan struct{})
@@ -46,7 +46,7 @@ func masterAction() (err error) {
     close(cancel)
     log.Printf("\n[Debug]: Terminating Main Master Process...\n")
     time.Sleep(10 * time.Second)
-    log.Printf("\n[Debug]: Terminate Main Master Process\n")
+    log.Printf("\n[Debug]: Terminated Main Master Process\n")
     return nil
   } else if setup {
     log.Printf("\n[Debug]: Setup Mode\n")

@@ -46,6 +46,7 @@ func Main(cancel chan struct{}) {
     default:
       log.Printf("[Debug] Waiting slave\n\n")
       conn, err := listen.Accept()
+      defer conn.Close()
       cacis.Error(err)
       go handling(conn)
     case <- cancel:
@@ -101,7 +102,6 @@ func handling(conn net.Conn) {
   } else {
     log.Println("[Error] Unknown Type")
   }
-  conn.Close()
 }
 
 func getImgList() []string {
