@@ -71,10 +71,9 @@ func waitReadyMicrok8s() {
   log.Printf("[Debug] Microk8s is Ready\n")
 }
 
-func removeMicrok8s() {
+func RemoveMicrok8s() {
   cacis.ExecCmd("microk8s stop", false)
   cacis.ExecCmd("microk8s reset --destroy-storage", false)
   cacis.ExecCmd("snap remove --purge microk8s", false)
-  cacis.ExecCmd("apt purge snap", false)
 }
 
