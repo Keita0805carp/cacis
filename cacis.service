@@ -1,0 +1,14 @@
+[Unit]
+Description=cacis.service
+
+[Service]
+ExecStart=/usr/local/bin/cacis master --main
+ExecStop=/bin/kill -SIGTERM $MAINPID
+#Restart=always
+WorkingDirectory=/home/ubuntu/go/src/github.com/keita0805carp/cacis
+Type=simple
+User=root
+TimeoutStopSec=15
+
+[Install]
+WantedBy = multi-user.target

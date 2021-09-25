@@ -26,14 +26,15 @@ var (
   componentsList = cacis.ComponentsList
 )
 
-func Main(cancel chan struct{}) {
+func Setup() {
   downloadMicrok8s()
   installMicrok8s()
-  exportAndPullAllImg()
-  go server(cancel)
+  enableMicrok8s()
+  exportAndPullAllImg(false)
+  //fmt.Println(getImgList())
 }
 
-func server(cancel chan struct{}) {
+func Main(cancel chan struct{}) {
   log.Println("[Debug] Starting Main Server")
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
@@ -45,9 +46,9 @@ func server(cancel chan struct{}) {
     default:
       log.Printf("[Debug] Waiting slave\n\n")
       conn, err := listen.Accept()
+      defer conn.Close()
       cacis.Error(err)
-      handling(conn)
-      conn.Close()
+      go handling(conn)
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
       cacis.ExecCmd("microk8s stop", false)
@@ -159,13 +160,17 @@ func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exported  %s to %s Completely\n", imageRef, filePath)
 }
 
-func exportAndPullAllImg(){
+func exportAndPullAllImg(onlyExport bool){
   log.Printf("[Debug] start: Pull and Export Images\n")
   log.Printf("\n[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
     //fmt.Printf("%s : %s\n", exporttDir + exportFile, imageRef)
-    pullImg(imageRef)
-    exportImg(targetDir + exportFile, imageRef)
+    if onlyExport {
+      exportImg(targetDir + exportFile, imageRef)
+    } else {
+      pullImg(imageRef)
+      exportImg(targetDir + exportFile, imageRef)
+    }
   }
   log.Printf("\n[Debug] end: Pull and Export Images\n\n")
 }
