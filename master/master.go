@@ -26,14 +26,15 @@ var (
   componentsList = cacis.ComponentsList
 )
 
-func Main(cancel chan struct{}) {
+func Setup() {
   downloadMicrok8s()
   installMicrok8s()
-  exportAndPullAllImg()
-  go server(cancel)
+  enableMicrok8s()
+  exportAndPullAllImg(false)
+  //fmt.Println(getImgList())
 }
 
-func server(cancel chan struct{}) {
+func Main(cancel chan struct{}) {
   log.Println("[Debug] Starting Main Server")
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
@@ -45,9 +46,9 @@ func server(cancel chan struct{}) {
     default:
       log.Printf("[Debug] Waiting slave\n\n")
       conn, err := listen.Accept()
+      defer conn.Close()
       cacis.Error(err)
-      handling(conn)
-      conn.Close()
+      go handling(conn)
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
       cacis.ExecCmd("microk8s stop", false)
@@ -103,13 +104,26 @@ func handling(conn net.Conn) {
   }
 }
 
+func getImgList() []string {
+  log.Printf("\n[Info] Show images list")
+
+  ctx, client := ContainerdInit()
+  defer client.Close()
+
+  images, err := client.ListImages(ctx)
+  cacis.Error(err)
+  imagesName := make([]string, len(images))
+  for i, image := range images {
+    imagesName[i] = image.Name()
+  }
+  return imagesName
+}
+
 func pullImg(imageName string) {
   log.Printf("\n[Info]  Pulling   %s ...", imageName)
 
-  ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
+  ctx, client := ContainerdInit()
   defer client.Close()
-  cacis.Error(err)
 
   opts := []containerd.RemoteOpt{
     containerd.WithAllMetadata(),
@@ -128,10 +142,8 @@ func pullImg(imageName string) {
 func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exporting %s to %s ...", imageRef, filePath)
 
-  ctx := context.Background()
-  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
+  ctx, client := ContainerdInit()
   defer client.Close()
-  cacis.Error(err)
 
   f, err := os.Create(filePath)
   defer f.Close()
@@ -148,13 +160,17 @@ func exportImg(filePath, imageRef string){
   log.Printf("\r[Info]  Exported  %s to %s Completely\n", imageRef, filePath)
 }
 
-func exportAndPullAllImg(){
+func exportAndPullAllImg(onlyExport bool){
   log.Printf("[Debug] start: Pull and Export Images\n")
   log.Printf("\n[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
     //fmt.Printf("%s : %s\n", exporttDir + exportFile, imageRef)
-    pullImg(imageRef)
-    exportImg(targetDir + exportFile, imageRef)
+    if onlyExport {
+      exportImg(targetDir + exportFile, imageRef)
+    } else {
+      pullImg(imageRef)
+      exportImg(targetDir + exportFile, imageRef)
+    }
   }
   log.Printf("\n[Debug] end: Pull and Export Images\n\n")
 }
@@ -229,5 +245,12 @@ func readFileByte(fileName string) []byte {
   file.Read(fileBuf)
 
   return fileBuf
+}
+
+func ContainerdInit() (context.Context, *containerd.Client) {
+  ctx := context.Background()
+  client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNameSpace))
+  cacis.Error(err)
+  return ctx, client
 }
 

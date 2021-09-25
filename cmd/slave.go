@@ -10,28 +10,29 @@ import (
 )
 
 var (
-    slaveCmd = &cobra.Command{
-        Use: "slave",
-        Run: slaveCommand,
-    }
+  slaveCmd = &cobra.Command{
+    Use: "slave",
+    Short: "Run Slave Process",
+    Run: slaveCommand,
+  }
 )
 
 func slaveCommand(cmd *cobra.Command, args []string) {
-    if err := slaveAction(); err != nil {
-        Exit(err, 1)
-    }
+  if err := slaveAction(); err != nil {
+    Exit(err, 1)
+  }
 }
 
 func slaveAction() (err error) {
-    log.Printf("\n[Debug]: Run Main Slave Process\n")
+  log.Printf("\n[Debug]: Run Main Slave Process\n")
 
-    ssid, pw := connection.GetWifiInfo()
-    connection.Connect(ssid, pw)
-    slave.Main()
+  ssid, pw := connection.GetWifiInfo()
+  connection.Connect(ssid, pw)
+  slave.Main()
 
-    return nil
+  return nil
 }
 
 func init() {
-    RootCmd.AddCommand(slaveCmd)
+  RootCmd.AddCommand(slaveCmd)
 }

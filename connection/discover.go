@@ -41,23 +41,17 @@ func discoverBLE(a *adapter.Adapter1) (*device.Device1, error) {
   for ev := range discoverd {
 
     dev, err := device.NewDevice1(ev.Path)
-    cacis.Error(err)
-
-    if dev == nil || dev.Properties == nil {
+    if err != nil || dev == nil || dev.Properties == nil {
       continue
     }
 
-    properties := dev.Properties
+    log.Printf("[Debug] Discovered (%s) %s\n", dev.Properties.Alias, dev.Properties.Address)
 
-    log.Printf("[Debug] Discovered (%s) %s\n", properties.Alias, properties.Address)
+    isCacisNode := regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(dev.Properties.Alias)
 
-    isCacisNode := regexp.MustCompile(`^cacis-[0-9a-fA-F]{8}$`).MatchString(properties.Alias)
-
-    if !isCacisNode {
-      continue
+    if isCacisNode {
+      return dev, nil
     }
-
-    return dev, nil
   }
   return nil, nil
 }

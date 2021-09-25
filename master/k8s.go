@@ -4,6 +4,7 @@ import (
   "fmt"
   "log"
   "net"
+  "os"
 
   "github.com/keita0805carp/cacis/cacis"
 )
@@ -68,8 +69,8 @@ func installMicrok8s() {
   } else {
     log.Printf("Install microk8s via snap\n")
     log.Printf("Installing...")
-    cacis.ExecCmd("snap ack " + targetDir + "microk8s_2347.assert", false)
-    cacis.ExecCmd("snap install " + targetDir + "microk8s_2347.snap" + " --classic", true)
+    cacis.ExecCmd("snap ack " + targetDir + cacis.Microk8sSnaps[0], false)
+    cacis.ExecCmd("snap install " + targetDir + cacis.Microk8sSnaps[1] + " --classic", true)
     log.Printf("[Debug] Installed\n")
     log.Printf("[Debug] Waiting for ready\n")
     cacis.ExecCmd("microk8s status --wait-ready", false)
@@ -78,10 +79,21 @@ func installMicrok8s() {
 }
 
 func enableMicrok8s() {
-  cacis.ExecCmd("microk8s enable dns dashboard", false)
+  log.Println("enable add-on...")
+  cacis.ExecCmd("microk8s enable registry dns dashboard", false)
+  log.Println("enabled add-on")
 }
 
-func getKubeconfig() {
-  cacis.ExecCmd("microk8s config", true)
+func GetKubeconfig() (string, error) {
+  config, err := cacis.ExecCmd("microk8s config", false)
+  return string(config), err
+}
+
+func ExportKubeconfig(path string) (error) {
+  config, err := GetKubeconfig()
+  file, err := os.Create(path)
+  cacis.Error(err)
+  _, err = file.WriteString(config)
+  return err
 }
 

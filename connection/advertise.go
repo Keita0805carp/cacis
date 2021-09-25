@@ -39,7 +39,7 @@ func Advertise(cancel chan struct{}, UUID, adapterAddr, adapterId, ssid, pass st
   log.Printf("[Info]  SSID: %s\n", ssid)
   log.Printf("[Info]  PASS: %s\n", pass)
 
-  timeout := uint32(6 * 3600) // 6h
+  timeout := uint32(65536 * 3600)
   log.Printf("[Debug] Advertising...\n")
   stop, err := app.Advertise(timeout)
   cacis.Error(err)

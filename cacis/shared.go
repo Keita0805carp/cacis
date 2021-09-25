@@ -31,11 +31,8 @@ func ExecCmd(command string, log bool) ([]byte, error) {
   if log {
     fmt.Println(string(stdout))
     Error(err)
-    return stdout, err
-  } else {
-    return nil, err
   }
-  //fmt.Printf("exec: %s\noutput:\n%s", cmd, stdout)
+  return stdout, err
 }
 
 func SortKeys(m map[string]string) []string {
