@@ -12,18 +12,18 @@ const (
 
 var (
   ComponentsList = map[string]string {
-    "cni.img"             : "docker.io/calico/cni:v3.13.2",
+    "cni.img"             : "docker.io/calico/cni:v3.19.1",
     "pause.img"           : "k8s.gcr.io/pause:3.1",
-    "kube-controllers.img": "docker.io/calico/kube-controllers:v3.13.2",
-    "pod2daemon.img"      : "docker.io/calico/pod2daemon-flexvol:v3.13.2",
-    "node.img"            : "docker.io/calico/node:v3.13.2",
+    "kube-controllers.img": "docker.io/calico/kube-controllers:v3.17.3",
+    "pod2daemon.img"      : "docker.io/calico/pod2daemon-flexvol:v3.19.1",
+    "node.img"            : "docker.io/calico/node:v3.19.1",
     "coredns.img"         : "docker.io/coredns/coredns:1.8.0",
-    "metrics-server.img"  : "k8s.gcr.io/metrics-server-arm64:v0.3.6",
-    "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.0.0",
+    "metrics-server.img"  : "k8s.gcr.io/metrics-server/metrics-server:v0.5.0",
+    "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.2.0",
     "hostpath-arm64.img"  : "docker.io/cdkbot/hostpath-provisioner-arm64:1.0.0",
     "registry-arm64.img"  : "docker.io/cdkbot/registry-arm64:2.6",
-    "metrics-scraper.img" : "docker.io/kubernetesui/metrics-scraper:v1.0.4",
+    "metrics-scraper.img" : "docker.io/kubernetesui/metrics-scraper:v1.0.6",
   }
-  Microk8sSnaps = []string{"microk8s_2347.assert", "microk8s_2347.snap"}
+  Microk8sSnaps = []string{"microk8s_2494.assert", "microk8s_2494.snap"}
   Snapd = []string{"core_11420.assert", "core_11420.snap"}
 )

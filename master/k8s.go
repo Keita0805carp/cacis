@@ -40,7 +40,7 @@ func sendSnapd(conn net.Conn) {
 func downloadMicrok8s() {
   log.Printf("[Debug] Download microk8s via snap\n")
   log.Printf("[Debug] Downloading...\n")
-  cacis.ExecCmd("snap download microk8s --target-directory=" + targetDir, false)
+  cacis.ExecCmd("snap download microk8s --channel=latest/stable --target-directory=" + targetDir, false)
   log.Printf("[Debug] Download Completely\n")
 }
 
