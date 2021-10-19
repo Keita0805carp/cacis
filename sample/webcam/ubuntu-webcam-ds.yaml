@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: sample-webcam-ubuntu-ds
+spec:
+  selector:
+    matchLabels:
+      app: sample-webcam-ubuntu
+  template:
+    metadata:
+      labels:
+        app: sample-webcam-ubuntu
+    spec:
+      containers:
+        - name: ubuntu-webcam
+          image: localhost:32000/webcam
+          command:
+            - /mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer
+            - -i
+            - "/mjpg-streamer/mjpg-streamer-experimental/input_uvc.so -yuv"
+            - -o
+            - "/mjpg-streamer/mjpg-streamer-experimental/output_http.so -p 8080 -w /mjpg-streamer/mjpg-streamer-experimental/www"
+            #- sleep
+            #- infinity
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: webcam
+              mountPath: /dev/video0
+          securityContext:
+            privileged: true
+      nodeSelector:
+        webcam: "true"
+      volumes:
+        - name: webcam
+          hostPath:
+            path: /dev/video0
+            type: CharDevice
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ubuntu-webcam-service
+spec:
+  type: NodePort
+  selector:
+    app: sample-webcam-ubuntu
+  ports:
+    - port: 8080
+
