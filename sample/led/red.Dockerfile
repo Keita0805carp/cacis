@@ -1,7 +1,7 @@
 FROM ubuntu
 
-COPY led-red.py .
+COPY red-led.py .
 
 RUN apt update && apt install -y python3-rpi.gpio
 
-CMD python3 led-red.py
+CMD python3 red-led.py

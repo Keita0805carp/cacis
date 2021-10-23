@@ -1,7 +1,7 @@
 FROM ubuntu
 
-COPY led-green.py .
+COPY green-led.py .
 
 RUN apt update && apt install -y python3-rpi.gpio
 
-CMD python3 led-green.py
+CMD python3 green-led.py
