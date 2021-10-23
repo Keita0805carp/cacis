@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: green-led-ds
+spec:
+  selector:
+    matchLabels:
+      app: green-led
+  template:
+    metadata:
+      labels:
+        app: green-led
+    spec:
+      containers:
+        - name: green-led
+          image: localhost:32000/led:green
+          volumeMounts:
+            - name: gpio
+              mountPath: /dev/gpiomem
+          #securityContext:
+          #  privileged: true
+      nodeSelector:
+        led: "21"
+      volumes:
+        - name: gpio
+          hostPath:
+            path: /dev/gpiomem
+            type: CharDevice
+      terminationGracePeriodSeconds: 30

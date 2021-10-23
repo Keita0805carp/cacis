@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: red-led-ds
+spec:
+  selector:
+    matchLabels:
+      app: red-led
+  template:
+    metadata:
+      labels:
+        app: red-led
+    spec:
+      containers:
+        - name: red-led
+          image: localhost:32000/led:red
+          volumeMounts:
+            - name: gpio
+              mountPath: /dev/gpiomem
+          #securityContext:
+          #  privileged: true
+      nodeSelector:
+        led: "20"
+      volumes:
+        - name: gpio
+          hostPath:
+            path: /dev/gpiomem
+            type: CharDevice
+      terminationGracePeriodSeconds: 30
