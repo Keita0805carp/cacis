@@ -37,24 +37,27 @@ func installSnapd() {
   cacis.ExecCmd("snap install core", false)
 }
 
-func recieveMicrok8s() {
+func recieveMicrok8s(listen net.Listener) {
   log.Println("[Debug] Start RECIEVE SNAP FILES")
   // Socket
-  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
-  defer conn.Close()
-
-  log.Println("[Debug] Request Snap files")
+  log.Printf("[Debug] Request Snap files\n")
   cLayer := cacis.RequestMicrok8sSnap()
   packet := cLayer.Marshal()
   //fmt.Println(packet)
-  conn.Write(packet)
+  conn2master.Write(packet)
   log.Printf("Requested\n\n")
+  conn2master.Close()
+
+  conn2slave, err := listen.Accept()
+  cacis.Error(err)
 
   for _, fileName := range cacis.Microk8sSnaps {
-    recieveFile(conn, fileName)
+    recieveFile(conn2slave, fileName)
   }
   log.Println("[Debug] End RECIEVE SNAP FILES")
+  conn2slave.Close()
 }
 
 func installMicrok8s() {

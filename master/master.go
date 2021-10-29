@@ -2,10 +2,10 @@ package master
 
 import (
   "os"
-  "fmt"
   "log"
   "net"
   "regexp"
+  "strings"
   "context"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -45,10 +45,10 @@ func Main(cancel chan struct{}) {
     select {
     default:
       log.Printf("[Debug] Waiting slave\n\n")
-      conn, err := listen.Accept()
-      defer conn.Close()
+      conn2master, err := listen.Accept()
       cacis.Error(err)
-      go handling(conn)
+
+      go handling(conn2master)
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
       cacis.ExecCmd("microk8s stop", false)
@@ -57,51 +57,63 @@ func Main(cancel chan struct{}) {
   }
 }
 
-func handling(conn net.Conn) {
+func handling(conn2master net.Conn) {
   // Recieve Request from slave
   buf := make([]byte, cacis.CacisLayerSize)
-  packetLength, err := conn.Read(buf)
+  packetLength, err := conn2master.Read(buf)
   cacis.Error(err)
-
   log.Printf("[Debug] Recieve Packet from Slave. len: %d\n", packetLength)
-  fmt.Println(buf)
   cLayer := cacis.Unmarshal(buf)
+  //fmt.Println(buf)
   //fmt.Println(string(rl.Payload))
+
+  remoteIP := conn2master.RemoteAddr().String()[:strings.LastIndex(conn2master.LocalAddr().String(), ":")]
+  log.Println("[Debug] Dialing...")
+  conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+  cacis.Error(err)
 
   /// Swtich Type
   if cLayer.Type == 10 {  /// request Components List
 
+    conn2master.Close()
     log.Println("[Debug] Type = 10")
-    sendComponentsList(conn)
+    sendComponentsList(conn2slave)
 
   } else if cLayer.Type == 20 {  /// request Image
 
+    conn2master.Close()
     log.Println("[Debug] Type = 20")
-    sendImg(conn)
+    sendImg(conn2slave)
 
   } else if cLayer.Type == 30 {  /// request microk8s snap
 
+    conn2master.Close()
     log.Println("[Debug] Type = 30")
-    sendMicrok8s(conn)
+    sendMicrok8s(conn2slave)
 
   } else if cLayer.Type == 40 {  /// request snapd
 
+    conn2master.Close()
     log.Println("[Debug] Type = 40")
-    sendSnapd(conn)
+    sendSnapd(conn2slave)
 
   } else if cLayer.Type == 50 {  /// request clustering
 
+    conn2master.Close()
     log.Println("[Debug] Type = 50")
-    clustering(conn)
+    clustering(conn2slave)
 
   } else if cLayer.Type == 60 {  /// request unclustering
 
     log.Println("[Debug] Type = 60")
-    unclustering(conn, cLayer)
+    unclustering(conn2master, cLayer)
+    conn2master.Close()
 
   } else {
+    conn2master.Close()
     log.Println("[Error] Unknown Type")
   }
+  conn2slave.Close()
 }
 
 func getImgList() []string {
