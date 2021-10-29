@@ -27,49 +27,54 @@ func Main() {
   //requestSnapd()
   //installSnapd()
 
+  listen, err := net.Listen("tcp", ":27001")
+  cacis.Error(err)
+
   if !cacis.IsCommandAvailable("microk8s") {
-    recieveMicrok8s()
+    recieveMicrok8s(listen)
     installMicrok8s()
-    setupMicrok8s()
+    setupMicrok8s(listen)
   }
 
   waitReadyMicrok8s()
-  clustering()
+  clustering(listen)
   fmt.Printf("[TEST] wait 60 seconds...\n")
   time.Sleep(60 * time.Second)
   unclustering()
   //TODO remove microk8s
 }
 
-func setupMicrok8s() {
-  componentsList := recieveComponentsList()
+func setupMicrok8s(listen net.Listener) {
+  componentsList := recieveComponentsList(listen)
   sortedExportFileName := cacis.SortKeys(componentsList)
-  recieveImg(sortedExportFileName)
+  recieveImg(listen, sortedExportFileName)
   importAllImg(componentsList)
 }
 
-func recieveComponentsList() map[string]string {
+func recieveComponentsList(listen net.Listener) map[string]string {
   log.Printf("[Debug] start: RECIEVE COMPONENTS LIST\n")
   // Socket
-  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
-  defer conn.Close()
-
   log.Printf("[Debug] Request Components List\n")
   cLayer := cacis.RequestComponentsList()
   packet := cLayer.Marshal()
-  //log.Println(packet)
-  conn.Write(packet)
-  log.Printf("Requested\n")
+  //fmt.Println(packet)
+  conn2master.Write(packet)
+  log.Printf("Requested\n\n")
+  conn2master.Close()
+
+  conn2slave, err := listen.Accept()
+  cacis.Error(err)
 
   log.Printf("[Debug] Recieve Packet\n")
   packet = make([]byte, cacis.CacisLayerSize)
-  packetLength, err := conn.Read(packet)
+  packetLength, err := conn2slave.Read(packet)
   cacis.Error(err)
   log.Printf("[Debug] Read Packet HEADER. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   log.Printf("[Debug] Read Packet PAYLOAD\n")
-  cLayer.Payload = loadPayload(conn, cLayer.Length)
+  cLayer.Payload = loadPayload(conn2slave, cLayer.Length)
 
   log.Printf("\r\n[Debug] Completed  %d\n", len(cLayer.Payload))
 
@@ -78,27 +83,31 @@ func recieveComponentsList() map[string]string {
   cacis.Error(err)
 
   log.Printf("[Debug] end: RECIEVE COMPONENTS LIST\n")
+  conn2slave.Close()
   return tmpList
 }
 
-func recieveImg(s []string) {
+func recieveImg(listen net.Listener, s []string) {
   log.Printf("[Debug] start: RECIEVE COMPONENT IMAGES\n")
   // Socket
-  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
-  defer conn.Close()
-
   log.Printf("[Debug] Request Components Image\n")
   cLayer := cacis.RequestImage()
   packet := cLayer.Marshal()
-  //log.Println(packet)
-  conn.Write(packet)
-  log.Printf("[Debug] Requested\n\n")
+  //fmt.Println(packet)
+  conn2master.Write(packet)
+  log.Printf("Requested\n\n")
+  conn2master.Close()
+
+  conn2slave, err := listen.Accept()
+  cacis.Error(err)
 
   for _, fileName := range s {
-    recieveFile(conn, fileName)
+    recieveFile(conn2slave, fileName)
   }
   log.Printf("[Debug] end: RECIEVE COMPONENT IMAGES\n")
+  conn2slave.Close()
 }
 
 func importImg(imageName, filePath string) {
@@ -129,27 +138,29 @@ func importAllImg(m map[string]string) {
     }
 }
 
-func clustering() {
+func clustering(listen net.Listener) {
   log.Printf("[Debug] Start CLUSTERING\n")
   // Socket
-  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
+  conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
-  defer conn.Close()
-
   log.Printf("[Debug] Request Clustering\n")
   cLayer := cacis.RequestClustering()
   packet := cLayer.Marshal()
   //fmt.Println(packet)
-  conn.Write(packet)
+  conn2master.Write(packet)
   log.Printf("Requested\n\n")
+  conn2master.Close()
+
+  conn2slave, err := listen.Accept()
+  cacis.Error(err)
 
   packet = make([]byte, cacis.CacisLayerSize)
-  packetLength, err := conn.Read(packet)
+  packetLength, err := conn2slave.Read(packet)
   cacis.Error(err)
   log.Printf("[Debug] Read Packet HEADER. len: %d\n", packetLength)
   cLayer = cacis.Unmarshal(packet)
   log.Printf("Debug: Read Packet PAYLOAD\n")
-  cLayer.Payload = loadPayload(conn, cLayer.Length)
+  cLayer.Payload = loadPayload(conn2slave, cLayer.Length)
 
   log.Printf("\n[Debug] Clustering...\n")
   result, err := cacis.ExecCmd(string(cLayer.Payload), true)
@@ -157,6 +168,7 @@ func clustering() {
   cacis.Error(err)
 
   log.Printf("[Debug] End CLUSTERING\n")
+  conn2slave.Close()
 }
 
 func unclustering() {
