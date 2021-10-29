@@ -75,26 +75,31 @@ func handling(conn2master net.Conn) {
   /// Swtich Type
   if cLayer.Type == 10 {  /// request Components List
 
+    conn2master.Close()
     log.Println("[Debug] Type = 10")
     sendComponentsList(conn2slave)
 
   } else if cLayer.Type == 20 {  /// request Image
 
+    conn2master.Close()
     log.Println("[Debug] Type = 20")
     sendImg(conn2slave)
 
   } else if cLayer.Type == 30 {  /// request microk8s snap
 
+    conn2master.Close()
     log.Println("[Debug] Type = 30")
     sendMicrok8s(conn2slave)
 
   } else if cLayer.Type == 40 {  /// request snapd
 
+    conn2master.Close()
     log.Println("[Debug] Type = 40")
     sendSnapd(conn2slave)
 
   } else if cLayer.Type == 50 {  /// request clustering
 
+    conn2master.Close()
     log.Println("[Debug] Type = 50")
     clustering(conn2slave)
 
@@ -102,11 +107,12 @@ func handling(conn2master net.Conn) {
 
     log.Println("[Debug] Type = 60")
     unclustering(conn2master, cLayer)
+    conn2master.Close()
 
   } else {
+    conn2master.Close()
     log.Println("[Error] Unknown Type")
   }
-  conn2master.Close()
   conn2slave.Close()
 }
 
