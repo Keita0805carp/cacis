@@ -5,7 +5,6 @@ import (
   "fmt"
   "log"
   "net"
-  "time"
   "encoding/json"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -38,9 +37,7 @@ func Main() {
 
   waitReadyMicrok8s()
   clustering(listen)
-  fmt.Printf("[TEST] wait 60 seconds...\n")
-  time.Sleep(60 * time.Second)
-  unclustering()
+
   //TODO remove microk8s
 }
 
@@ -154,6 +151,7 @@ func clustering(listen net.Listener) {
   conn2slave, err := listen.Accept()
   cacis.Error(err)
 
+
   packet = make([]byte, cacis.CacisLayerSize)
   packetLength, err := conn2slave.Read(packet)
   cacis.Error(err)
@@ -171,7 +169,7 @@ func clustering(listen net.Listener) {
   conn2slave.Close()
 }
 
-func unclustering() {
+func Unclustering() {
   log.Printf("[Debug] Start UNCLUSTERING\n")
   log.Printf("[Debug] Leaving...\n")
   cacis.ExecCmd("microk8s leave", true)
