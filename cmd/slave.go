@@ -28,7 +28,14 @@ func slaveAction() (err error) {
 
   ssid, pw := connection.GetWifiInfo()
   connection.Connect(ssid, pw)
+
+  cancel := make(chan struct{})
+  go connection.UnstableWifiEvent(cancel)
   slave.Main()
+
+  <- cancel
+
+  slave.Unclustering()
 
   return nil
 }

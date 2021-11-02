@@ -9,8 +9,8 @@ import (
 )
 
 const (
-  hostapdConfTemplatePath = "connection/hostapd.conf.template"
-  hostapdConfPath = "connection/hostapd.conf"
+  hostapdConfTemplatePath = cacis.HostapdConfTemplatePath
+  hostapdConfPath = cacis.HostapdConfPath
 )
 
 func StartHostapd(cancel chan struct{}, ssid, pw string) {

@@ -11,8 +11,8 @@ import (
 )
 
 const (
-  netplanConfTemplatePath = "connection/netplan.conf.template"
-  netplanConfPath = "/etc/netplan/60-cacis.yaml"
+  netplanConfTemplatePath = cacis.NetplanConfTemplatePath
+  netplanConfPath = cacis.NetplanConfPath
 )
 
 func Connect(ssid, pw string) {
