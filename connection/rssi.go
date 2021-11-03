@@ -50,9 +50,13 @@ func getRSSI() int {
   }
   file.Close()
 
-  info := strings.Fields(lines[2])
-  rssi, err :=  strconv.Atoi(info[3][:len(info[3])-1])
-  cacis.Error(err)
-  //log.Printf("RSSI: %d\n", signal)
+  rssi := -999
+  if len(lines) > 2 {
+    info := strings.Fields(lines[2])
+    parse := strings.Replace(info[3], ".", "", 1)
+    rssi, err =  strconv.Atoi(parse)
+    cacis.Error(err)
+  }
+  log.Printf("RSSI: %d\n", rssi)
   return rssi
 }
