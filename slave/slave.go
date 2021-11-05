@@ -37,6 +37,7 @@ func Main() {
 
   waitReadyMicrok8s()
   clustering(listen)
+  labelNode()
 
   //TODO remove microk8s
 }
@@ -46,6 +47,14 @@ func setupMicrok8s(listen net.Listener) {
   sortedExportFileName := cacis.SortKeys(componentsList)
   recieveImg(listen, sortedExportFileName)
   importAllImg(componentsList)
+}
+
+func labelNode() {
+  hostname, err := os.Hostname()
+  cacis.Error(err)
+  for key, value := range cacis.NodeLabels {
+    log.Println("microk8s kubectl label %s %s %s", hostname, key, value)
+  }
 }
 
 func recieveComponentsList(listen net.Listener) map[string]string {

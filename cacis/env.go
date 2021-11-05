@@ -15,6 +15,10 @@ const (
 )
 
 var (
+  NodeLabels = map[string]string {
+    "testLabel"           : "test1",
+    "testLabel"           : "test2",
+  }
   ComponentsList = map[string]string {
     "cni.img"             : "docker.io/calico/cni:v3.19.1",
     "pause.img"           : "k8s.gcr.io/pause:3.1",
