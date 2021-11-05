@@ -7,6 +7,13 @@ spec:
   containers:
     - name: alpine
       image: localhost:32000/webcam:alpine
+      command:
+        - sleep
+        - "86400"
+        # - -i
+        # - "/mjpg-streamer/mjpg-streamer-experimental/input_raspicam.so -d /dev/video0"
+        # - -o
+        # - "/mjpg-streamer/mjpg-streamer-experimental/output_http.so -p 8080 -w /mjpg-streamer/mjpg-streamer-experimental/www"
       ports:
         - containerPort: 8080
       volumeMounts:

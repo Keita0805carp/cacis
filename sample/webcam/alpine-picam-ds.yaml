@@ -2,36 +2,38 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: sample-webcam-ubuntu-ds
+  name: sample-picam-alpine-ds
 spec:
   selector:
     matchLabels:
-      app: sample-webcam-ubuntu
+      app: sample-picam-alpine
   template:
     metadata:
       labels:
-        app: sample-webcam-ubuntu
+        app: sample-picam-alpine
     spec:
       containers:
-        - name: ubuntu-webcam
-          image: localhost:32000/webcam:ubuntu
+        - name: alpine-picam
+          image: localhost:32000/webcam
           command:
             - /mjpg-streamer/mjpg-streamer-experimental/mjpg_streamer
             - -i
-            - "/mjpg-streamer/mjpg-streamer-experimental/input_uvc.so -yuv"
+            - "/mjpg-streamer/mjpg-streamer-experimental/input_uvc.so -d /dev/video0"
             - -o
             - "/mjpg-streamer/mjpg-streamer-experimental/output_http.so -p 8080 -w /mjpg-streamer/mjpg-streamer-experimental/www"
+            #- sleep
+            #- infinity
           ports:
             - containerPort: 8080
           volumeMounts:
-            - name: webcam
+            - name: picam
               mountPath: /dev/video0
           securityContext:
             privileged: true
       nodeSelector:
-        webcam: "true"
+        picam: "true"
       volumes:
-        - name: webcam
+        - name: picam
           hostPath:
             path: /dev/video0
             type: CharDevice
@@ -40,11 +42,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ubuntu-webcam-service
+  name: alpine-picam-service
 spec:
   type: NodePort
   selector:
-    app: sample-webcam-ubuntu
+    app: sample-picam-alpine
   ports:
     - port: 8080
 

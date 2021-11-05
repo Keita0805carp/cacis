@@ -5,12 +5,9 @@ RUN wget https://github.com/jacksonliam/mjpg-streamer/archive/master.zip && unzi
 # hadolint ignore=DL3003
 RUN cd mjpg-streamer-master/mjpg-streamer-experimental && make && make install
 
-EXPOSE 80
+EXPOSE 8080
 
-ENTRYPOINT ["mjpg_streamer"]
-CMD ["-i", "input_uvc.so -n -f 30", "-o", "output_http.so -p 80 -w /usr/local/share/mjpg-streamer/www"]
-
-
+CMD ["mjpg_streamer", "-i", "input_uvc.so -n -f 30", "-o", "output_http.so -p 8080 -w /usr/local/share/mjpg-streamer/www"]
 
 #FROM alpine
 #
