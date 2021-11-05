@@ -7,7 +7,11 @@ const (
   ContainerdSock = "/var/snap/microk8s/common/run/containerd.sock"
   ContainerdNameSpace = "k8s.io"
   //containerdNameSpace = "cacis"
-  ConfigPath = "./connection/dhcp.conf"
+  DhcpConfPath = "config/dhcp.conf"
+  NetplanConfTemplatePath = "config/netplan.conf.template"
+  NetplanConfPath = "/etc/netplan/60-cacis.yaml"
+  HostapdConfTemplatePath = "config/hostapd.conf.template"
+  HostapdConfPath = "config/hostapd.conf"
 )
 
 var (

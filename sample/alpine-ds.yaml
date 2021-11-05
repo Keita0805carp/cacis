@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: sample-alpine
+  labels:
+    app: sample
+spec:
+  selector:
+    matchLabels:
+      name: sample-alpine
+  template:
+    metadata:
+      labels:
+        name: sample-alpine
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                    - master
+      containers:
+        - name: sample-alpine
+          image: localhost:32000/alpine
+          command:
+            - sleep
+            - infinity
+          #resources:
+          #  limits:
+          #    memory: 200Mi
+          #  requests:
+          #    cpu: 100m
+          #    memory: 200Mi
+      terminationGracePeriodSeconds: 30

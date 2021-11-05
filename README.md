@@ -33,3 +33,22 @@ $ sudo apt install hostapd
 ## Only Slave
 $ sudo apt install netplan.io
 ```
+
+### Default Add-on
+- registry
+- dashboard
+- dns
+
+### How to run Docker image
+
+```
+docker tag [local image] [localhost:32000/hoge:fuga]
+docker push [localhost:32000/hoge:fuga]
+```
+
+Then, create kuberentes yaml and apply it.
+
+```
+kubectl apply -f [piyo.yaml]
+```
+

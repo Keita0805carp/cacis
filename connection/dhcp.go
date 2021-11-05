@@ -17,7 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const configPath = cacis.ConfigPath
+const configPath = cacis.DhcpConfPath
 
 var desiredPlugins = []*plugins.Plugin{
   &pl_leasetime.Plugin,

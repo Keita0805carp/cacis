@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alpine-test
+spec:
+  containers:
+    - name: alpine-test
+      image: localhost:32000/alpine:registry
+      command:
+      - sleep
+      - infinity

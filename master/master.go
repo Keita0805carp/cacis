@@ -68,40 +68,67 @@ func handling(conn2master net.Conn) {
   //fmt.Println(string(rl.Payload))
 
   remoteIP := conn2master.RemoteAddr().String()[:strings.LastIndex(conn2master.LocalAddr().String(), ":")]
-  log.Println("[Debug] Dialing...")
-  conn2slave, err := net.Dial("tcp", remoteIP+":27001")
-  cacis.Error(err)
 
   /// Swtich Type
   if cLayer.Type == 10 {  /// request Components List
+
+    log.Println("[Debug] Dialing...")
+    conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+    cacis.Error(err)
 
     conn2master.Close()
     log.Println("[Debug] Type = 10")
     sendComponentsList(conn2slave)
 
+    conn2slave.Close()
+
   } else if cLayer.Type == 20 {  /// request Image
+
+    log.Println("[Debug] Dialing...")
+    conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+    cacis.Error(err)
 
     conn2master.Close()
     log.Println("[Debug] Type = 20")
     sendImg(conn2slave)
 
+    conn2slave.Close()
+
   } else if cLayer.Type == 30 {  /// request microk8s snap
+
+    log.Println("[Debug] Dialing...")
+    conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+    cacis.Error(err)
 
     conn2master.Close()
     log.Println("[Debug] Type = 30")
     sendMicrok8s(conn2slave)
 
+    conn2slave.Close()
+
   } else if cLayer.Type == 40 {  /// request snapd
+
+    log.Println("[Debug] Dialing...")
+    conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+    cacis.Error(err)
 
     conn2master.Close()
     log.Println("[Debug] Type = 40")
     sendSnapd(conn2slave)
 
+    conn2slave.Close()
+
   } else if cLayer.Type == 50 {  /// request clustering
+
+    log.Println("[Debug] Dialing...")
+    conn2slave, err := net.Dial("tcp", remoteIP+":27001")
+    cacis.Error(err)
 
     conn2master.Close()
     log.Println("[Debug] Type = 50")
     clustering(conn2slave)
+
+    conn2slave.Close()
 
   } else if cLayer.Type == 60 {  /// request unclustering
 
@@ -113,7 +140,6 @@ func handling(conn2master net.Conn) {
     conn2master.Close()
     log.Println("[Error] Unknown Type")
   }
-  conn2slave.Close()
 }
 
 func getImgList() []string {
