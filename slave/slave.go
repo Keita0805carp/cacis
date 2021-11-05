@@ -53,7 +53,8 @@ func labelNode() {
   hostname, err := os.Hostname()
   cacis.Error(err)
   for key, value := range cacis.NodeLabels {
-    log.Println("microk8s kubectl label %s %s %s", hostname, key, value)
+    cmd := "microk8s kubectl label nodes " + hostname + " " + key + "=" + value
+    cacis.ExecCmd(cmd, false)
   }
 }
 
