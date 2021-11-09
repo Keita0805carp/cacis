@@ -32,7 +32,6 @@ var (
     "registry-arm64.img"  : "docker.io/cdkbot/registry-arm64:2.6",
     "metrics-scraper.img" : "docker.io/kubernetesui/metrics-scraper:v1.0.6",
   }
-  Micork8sRevision = "microk8s_2494"
-  Microk8sSnaps = []string{Micork8sRevision+".assert", Micork8sRevision+".snap"}
+  Microk8sSnaps = []string {"microk8s_cacis.assert", "microk8s_cacis.snap"}
   Snapd = []string{"core_11420.assert", "core_11420.snap"}
 )
