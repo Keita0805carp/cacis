@@ -26,6 +26,12 @@ func Connect(ssid, pw string) {
   time.Sleep(10 * time.Second)
 }
 
+func Disconnect() {
+  log.Println("[Debug] Delete netplan config")
+  delNetplanConfig()
+  log.Println("[Debug] Apply netplan config")
+}
+
 func genNetplanConfig(ssid, pw string) {
 
   log.Println("[Debug] Generate netplan Config...")

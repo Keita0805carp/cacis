@@ -68,7 +68,7 @@ func installMicrok8s() {
   log.Printf("[Debug] Installed\n")
 }
 
-func waitReadyMicrok8s() {
+func WaitReadyMicrok8s() {
   log.Printf("[Debug] Waiting for ready\n")
   cacis.ExecCmd("microk8s status --wait-ready", false)
   log.Printf("[Debug] Microk8s is Ready\n")

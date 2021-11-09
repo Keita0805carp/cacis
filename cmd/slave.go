@@ -24,18 +24,22 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 }
 
 func slaveAction() (err error) {
-  log.Printf("\n[Debug]: Run Main Slave Process\n")
+  for {
+    log.Printf("\n[Debug]: Run Main Slave Process\n")
 
-  ssid, pw := connection.GetWifiInfo()
-  connection.Connect(ssid, pw)
+    ssid, pw := connection.GetWifiInfo()
+    connection.Connect(ssid, pw)
 
-  cancel := make(chan struct{})
-  go connection.UnstableWifiEvent(cancel)
-  slave.Main()
+    cancel := make(chan struct{})
+    go connection.UnstableWifiEvent(cancel)
+    slave.Main()
 
-  <- cancel
+    <- cancel
 
-  slave.Unclustering()
+    slave.Unclustering()
+    connection.Disconnect()
+    slave.WaitReadyMicrok8s()
+  }
 
   return nil
 }

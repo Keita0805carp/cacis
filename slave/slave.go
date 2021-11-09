@@ -22,10 +22,6 @@ const (
 )
 
 func Main() {
-  //TODO? checkSnapd()
-  //requestSnapd()
-  //installSnapd()
-
   listen, err := net.Listen("tcp", ":27001")
   cacis.Error(err)
 
@@ -35,11 +31,9 @@ func Main() {
     setupMicrok8s(listen)
   }
 
-  waitReadyMicrok8s()
+  WaitReadyMicrok8s()
   clustering(listen)
   labelNode()
-
-  //TODO remove microk8s
 }
 
 func setupMicrok8s(listen net.Listener) {
@@ -52,10 +46,12 @@ func setupMicrok8s(listen net.Listener) {
 func labelNode() {
   hostname, err := os.Hostname()
   cacis.Error(err)
+  cmd := "microk8s kubectl label nodes " + hostname
   for key, value := range cacis.NodeLabels {
-    cmd := "microk8s kubectl label nodes " + hostname + " " + key + "=" + value
-    cacis.ExecCmd(cmd, false)
+    cmd += " " + key + "=" + value
   }
+  WaitReadyMicrok8s()
+  cacis.ExecCmd(cmd, false)
 }
 
 func recieveComponentsList(listen net.Listener) map[string]string {
