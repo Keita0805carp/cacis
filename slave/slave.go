@@ -5,6 +5,7 @@ import (
   "fmt"
   "log"
   "net"
+  "time"
   "encoding/json"
 
   "github.com/keita0805carp/cacis/cacis"
@@ -45,6 +46,7 @@ func setupMicrok8s(listen net.Listener) {
 }
 
 func labelNode() {
+  log.Printf("[Debug] Node Label\n")
   hostname, err := os.Hostname()
   cacis.Error(err)
   cmd := "microk8s kubectl label nodes " + hostname
@@ -52,7 +54,9 @@ func labelNode() {
     cmd += " " + key + "=" + value
   }
   WaitReadyMicrok8s()
+  time.Sleep(time.Second * 2)
   cacis.ExecCmd(cmd, false)
+  log.Printf("[Debug] Node Labeled\n")
 }
 
 func recieveComponentsList(listen net.Listener) map[string]string {
