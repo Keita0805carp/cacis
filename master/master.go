@@ -27,6 +27,7 @@ var (
 )
 
 func Setup() {
+  cacis.CreateTempDir()
   downloadMicrok8s()
   installMicrok8s()
   enableMicrok8s()
