@@ -26,6 +26,7 @@ func Main() {
   cacis.Error(err)
 
   if !cacis.IsCommandAvailable("microk8s") {
+    cacis.CreateTempDir()
     recieveMicrok8s(listen)
     installMicrok8s()
     setupMicrok8s(listen)
