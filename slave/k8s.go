@@ -75,8 +75,8 @@ func WaitReadyMicrok8s() {
 }
 
 func RemoveMicrok8s() {
-  cacis.ExecCmd("microk8s stop", true)
-  cacis.ExecCmd("microk8s reset --destroy-storage", true)
+  //cacis.ExecCmd("microk8s stop", true)
+  //cacis.ExecCmd("microk8s reset --destroy-storage", true)
   cacis.ExecCmd("snap remove --purge microk8s", true)
 }
 
