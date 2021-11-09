@@ -10,6 +10,8 @@ import (
 )
 
 var (
+  leave bool
+
   slaveCmd = &cobra.Command{
     Use: "slave",
     Short: "Run Slave Process",
@@ -24,6 +26,12 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 }
 
 func slaveAction() (err error) {
+  if leave {
+    log.Printf("\n[Debug]: Manual leave\n")
+    slave.Unclustering()
+    return
+  }
+
   for {
     log.Printf("\n[Debug]: Run Main Slave Process\n")
 
@@ -40,10 +48,10 @@ func slaveAction() (err error) {
     connection.Disconnect()
     slave.WaitReadyMicrok8s()
   }
-
   return nil
 }
 
 func init() {
   RootCmd.AddCommand(slaveCmd)
+  slaveCmd.Flags().BoolVarP(&leave, "leave", "l", false, "Manual leave from k8s cluster")
 }
