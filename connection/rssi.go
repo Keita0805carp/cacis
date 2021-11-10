@@ -57,6 +57,6 @@ func getRSSI() int {
     rssi, err =  strconv.Atoi(parse)
     cacis.Error(err)
   }
-  log.Printf("RSSI: %d\n", rssi)
+  log.Printf("[Info] RSSI: %d\n", rssi)
   return rssi
 }

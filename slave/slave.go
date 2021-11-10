@@ -54,7 +54,7 @@ func labelNode() {
     cmd += " " + key + "=" + value
   }
   WaitReadyMicrok8s()
-  time.Sleep(time.Second * 2)
+  time.Sleep(time.Second * 3)
   cacis.ExecCmd(cmd, false)
   log.Printf("[Debug] Node Labeled\n")
 }
