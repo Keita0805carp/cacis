@@ -1,7 +1,7 @@
 package cacis
 
 const (
-  MasterIP = "10.0.100.1"
+  MasterIP = "172.30.0.1"
   MasterPort = "27001"
   TargetDir = "./tmp/"
   ContainerdSock = "/var/snap/microk8s/common/run/containerd.sock"
