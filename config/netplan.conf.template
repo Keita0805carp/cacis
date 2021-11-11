@@ -6,5 +6,7 @@ network:
                {{SSID}}:
                    hidden: true
                    password: {{PASSWORD}}
+           nameservers:
+             search: [local]
     version: 2
     renderer: networkd
