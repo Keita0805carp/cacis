@@ -147,7 +147,8 @@ func Unclustering() {
   }
   log.Printf("[Debug] Start UNCLUSTERING\n")
   log.Printf("[Debug] Leaving...\n")
-  cacis.ExecCmd("microk8s leave", true)
+  go cacis.ExecCmd("microk8s leave", false)
+  time.Sleep(time.Second * 20)
   // Socket
   conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
