@@ -4,7 +4,6 @@ import (
   "log"
 
   "github.com/keita0805carp/cacis/slave"
-  "github.com/keita0805carp/cacis/connection"
 
   "github.com/spf13/cobra"
 )
@@ -27,27 +26,13 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 
 func slaveAction() (err error) {
   if leave {
-    log.Printf("\n[Debug]: Manual leave\n")
+    log.Printf("[Debug]: Manual leave\n")
     slave.Unclustering()
     return
   }
 
-  for {
-    log.Printf("\n[Debug]: Run Main Slave Process\n")
+  slave.Main()
 
-    ssid, pw := connection.GetWifiInfo()
-    connection.Connect(ssid, pw)
-
-    cancel := make(chan struct{})
-    go connection.UnstableWifiEvent(cancel)
-    slave.Main()
-
-    <- cancel
-
-    slave.Unclustering()
-    connection.Disconnect()
-    slave.WaitReadyMicrok8s()
-  }
   return nil
 }
 
