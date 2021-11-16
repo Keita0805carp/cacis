@@ -27,7 +27,7 @@ var (
     "node.img"            : "docker.io/calico/node:v3.19.1",
     "coredns.img"         : "docker.io/coredns/coredns:1.8.0",
     "metrics-server.img"  : "k8s.gcr.io/metrics-server/metrics-server:v0.5.0",
-    "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.2.0",
+    //"dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.2.0",
     "hostpath-arm64.img"  : "docker.io/cdkbot/hostpath-provisioner-arm64:1.0.0",
     "registry-arm64.img"  : "docker.io/cdkbot/registry-arm64:2.6",
     "metrics-scraper.img" : "docker.io/kubernetesui/metrics-scraper:v1.0.6",

@@ -1,10 +1,13 @@
 package master
 
 import (
-  "fmt"
-  "log"
-  "net"
   "os"
+  "fmt"
+  "net"
+  "log"
+  "time"
+  "regexp"
+  "strings"
 
   "github.com/keita0805carp/cacis/cacis"
 )
@@ -95,5 +98,72 @@ func ExportKubeconfig(path string) (error) {
   cacis.Error(err)
   _, err = file.WriteString(config)
   return err
+}
+
+func clustering(conn net.Conn) {
+  log.Print("\nDebug: [start] Clustering\n")
+  output, err := cacis.ExecCmd("microk8s add-node", false)
+  cacis.Error(err)
+  //fmt.Println(string(output))
+  regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
+  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
+
+  /// Send CLuster Info
+  cLayer := cacis.SendClusterInfo([]byte(joinCmd))
+  packet := cLayer.Marshal()
+  //fmt.Println(cLayer)
+  conn.Write(packet)
+  log.Printf("\nDebug: [end] Clustering\n")
+}
+
+func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
+  log.Printf("\nDebug: [start] Unclustering\n")
+
+  buf := make([]byte, cLayer.Length)
+  packetLength, err := conn.Read(buf)
+  cacis.Error(err)
+  log.Printf("[Debug] Read Packet PAYLOAD. len: %d\n", packetLength)
+  //fmt.Println(string(buf))
+
+  cacis.ExecCmd("microk8s remove-node " + string(buf), true)
+  log.Printf("\nDebug: [end] Unclustering\n")
+}
+
+func removeNotReadyNode() {
+  nodes := map[string]int{}
+  for {
+    time.Sleep(time.Second * 10)
+    nodes = getNodeStatus(nodes)
+    for k, v := range nodes {
+      if v > 5 {
+        log.Printf("Force remove %s\n", k)
+        cacis.ExecCmd("microk8s remove-node " + k + " --force", false)
+      }
+    }
+  }
+}
+
+func getNodeStatus(nodes map[string]int) map[string]int {
+  bin, err := cacis.ExecCmd("microk8s kubectl get nodes", false)
+  if err != nil {
+    fmt.Println(err)
+    return nil
+  }
+  stdout := string(bin)
+  lines := strings.Split(stdout, "\n")
+  lines = lines[1:len(lines)-1]
+  
+  for _, line := range lines {
+    info := strings.Fields(line)
+    node := info[0]
+    status := info[1]
+    if status == "Ready" {
+      nodes[node] = 0
+    } else {
+      nodes[node] += 1
+    }
+  }
+  //fmt.Println(nodes)
+  return nodes
 }
 

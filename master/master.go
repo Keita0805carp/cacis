@@ -1,14 +1,17 @@
 package master
 
 import (
-  "os"
   "log"
   "net"
-  "regexp"
+  "os"
+  "os/signal"
+  "time"
   "strings"
   "context"
+  "syscall"
 
   "github.com/keita0805carp/cacis/cacis"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/containerd/containerd"
   "github.com/containerd/containerd/platforms"
@@ -35,7 +38,23 @@ func Setup() {
   //fmt.Println(getImgList())
 }
 
-func Main(cancel chan struct{}) {
+func Main() {
+  terminate := make(chan os.Signal, 1)
+  signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
+  cancel := make(chan struct{})
+
+  connection.Main(cancel)
+  go listening(cancel)
+
+  go removeNotReadyNode()
+  <-terminate
+  close(cancel)
+  log.Printf("\n[Debug]: Terminating Main Master Process...\n")
+  time.Sleep(10 * time.Second)
+  log.Printf("\n[Debug]: Terminated Main Master Process\n")
+}
+
+func listening(cancel chan struct{}) {
   log.Println("[Debug] Starting Main Server")
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
@@ -45,7 +64,7 @@ func Main(cancel chan struct{}) {
   for {
     select {
     default:
-      log.Printf("[Debug] Waiting slave\n\n")
+      log.Printf("[Debug] Waiting slave\n")
       conn2master, err := listen.Accept()
       cacis.Error(err)
 
@@ -239,35 +258,6 @@ func sendImg(conn net.Conn) {
     log.Printf("\r[Debug] Send Image %s Completely\n", fileName)
   }
   log.Printf("\n[Debug] end: Send Components Images\n")
-}
-
-func clustering(conn net.Conn) {
-  log.Print("\nDebug: [start] Clustering\n")
-  output, err := cacis.ExecCmd("microk8s add-node", false)
-  cacis.Error(err)
-  //fmt.Println(string(output))
-  regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
-  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
-
-  /// Send CLuster Info
-  cLayer := cacis.SendClusterInfo([]byte(joinCmd))
-  packet := cLayer.Marshal()
-  //fmt.Println(cLayer)
-  conn.Write(packet)
-  log.Printf("\nDebug: [end] Clustering\n")
-}
-
-func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
-  log.Printf("\nDebug: [start] Unclustering\n")
-
-  buf := make([]byte, cLayer.Length)
-  packetLength, err := conn.Read(buf)
-  cacis.Error(err)
-  log.Printf("[Debug] Read Packet PAYLOAD. len: %d\n", packetLength)
-  //fmt.Println(string(buf))
-
-  cacis.ExecCmd("microk8s remove-node " + string(buf), true)
-  log.Printf("\nDebug: [end] Unclustering\n")
 }
 
 func readFileByte(fileName string) []byte {
