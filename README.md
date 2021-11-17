@@ -36,8 +36,10 @@ $ sudo apt install hostapd
 $ sudo apt install netplan.io
 ```
 
-```/etc/systemd/network/50-wlan0.network
+```
 # Only Master
+# $ ifconfig wlan0 172.30.0.1/24
+# /etc/systemd/network/50-wlan0.network
 [Match]
 Name=wlan0
 
