@@ -136,7 +136,7 @@ func removeNotReadyNode() {
     time.Sleep(time.Second * 30)
     nodes = getNodeStatus(nodes)
     for k, v := range nodes {
-      if v > 5 {
+      if k != "master" && v > 5 {
         log.Printf("%s is unstable. Force remove...\n", k)
         cacis.ExecCmd("microk8s remove-node " + k + " --force", false)
         delete(nodes, k)
