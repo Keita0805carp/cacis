@@ -130,14 +130,16 @@ func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
 }
 
 func removeNotReadyNode() {
-  nodes := map[string]int{}
+  var nodes map[string]int
+  nodes = map[string]int{}
   for {
-    time.Sleep(time.Second * 10)
+    time.Sleep(time.Second * 30)
     nodes = getNodeStatus(nodes)
     for k, v := range nodes {
       if v > 5 {
-        log.Printf("Force remove %s\n", k)
+        log.Printf("%s is unstable. Force remove...\n", k)
         cacis.ExecCmd("microk8s remove-node " + k + " --force", false)
+        delete(nodes, k)
       }
     }
   }
@@ -146,7 +148,7 @@ func removeNotReadyNode() {
 func getNodeStatus(nodes map[string]int) map[string]int {
   bin, err := cacis.ExecCmd("microk8s kubectl get nodes", false)
   if err != nil {
-    fmt.Println(err)
+    fmt.Println(string(bin))
     return nil
   }
   stdout := string(bin)
