@@ -11,7 +11,7 @@ import (
 
 func Error(err error) {
   if err != nil {
-    log.Fatal(err)
+    log.Printf("[Error] %s", err)
   }
 }
 
@@ -37,12 +37,13 @@ func IsCommandAvailable(command string) bool {
   return true
 }
 
-func ExecCmd(command string, log bool) ([]byte, error) {
+func ExecCmd(command string, log bool) (string, error) {
   slice := strings.Split(command, " ")
-  stdout, err := exec.Command(slice[0], slice[1:]...).Output()
-  if log {
-    fmt.Println(string(stdout))
-    Error(err)
+  bin, err := exec.Command(slice[0], slice[1:]...).Output()
+  stdout := string(bin)
+  if err != nil || log {
+    fmt.Println(stdout)
+    //Error(err)
   }
   return stdout, err
 }

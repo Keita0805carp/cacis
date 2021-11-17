@@ -89,7 +89,7 @@ func enableMicrok8s() {
 
 func GetKubeconfig() (string, error) {
   config, err := cacis.ExecCmd("microk8s config", false)
-  return string(config), err
+  return config, err
 }
 
 func ExportKubeconfig(path string) (error) {
@@ -101,19 +101,19 @@ func ExportKubeconfig(path string) (error) {
 }
 
 func clustering(conn net.Conn) {
-  log.Print("\nDebug: [start] Clustering\n")
-  output, err := cacis.ExecCmd("microk8s add-node", false)
+  log.Printf("[Debug] Start Clustering\n")
+  stdout, err := cacis.ExecCmd("microk8s add-node", false)
   cacis.Error(err)
   //fmt.Println(string(output))
   regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
-  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
+  joinCmd := regex.FindAllStringSubmatch(stdout, 1)[0][0]
 
   /// Send CLuster Info
   cLayer := cacis.SendClusterInfo([]byte(joinCmd))
   packet := cLayer.Marshal()
   //fmt.Println(cLayer)
   conn.Write(packet)
-  log.Printf("\nDebug: [end] Clustering\n")
+  log.Printf("[Debug] End Clustering\n")
 }
 
 func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
@@ -130,8 +130,7 @@ func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
 }
 
 func removeNotReadyNode() {
-  var nodes map[string]int
-  nodes = map[string]int{}
+  nodes := make(map[string]int)
   for {
     time.Sleep(time.Second * 30)
     nodes = getNodeStatus(nodes)
@@ -146,12 +145,11 @@ func removeNotReadyNode() {
 }
 
 func getNodeStatus(nodes map[string]int) map[string]int {
-  bin, err := cacis.ExecCmd("microk8s kubectl get nodes", false)
+  stdout, err := cacis.ExecCmd("microk8s kubectl get nodes", false)
   if err != nil {
-    fmt.Println(string(bin))
-    return nil
+    log.Printf("[Error] Failed to get nodes.")
+    return nodes
   }
-  stdout := string(bin)
   lines := strings.Split(stdout, "\n")
   lines = lines[1:len(lines)-1]
   

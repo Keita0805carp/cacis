@@ -181,6 +181,7 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
     //log.Printf("\r[Debug] recieving...")
     fmt.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
   }
+  fmt.Printf("\r[Info]  Completed  %d  of %d\n", len(packet), int(targetBytes))
   return packet
 }
 

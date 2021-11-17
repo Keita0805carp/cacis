@@ -43,6 +43,7 @@ func Main() {
   signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
   cancel := make(chan struct{})
 
+  cacis.ExecCmd("microk8s start", true)
   connection.Main(cancel)
   go listening(cancel)
 

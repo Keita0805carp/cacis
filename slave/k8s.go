@@ -3,7 +3,6 @@ package slave
 import (
   "os"
   "log"
-  "fmt"
   "net"
   "time"
   "bufio"
@@ -105,8 +104,8 @@ func IsClustered() bool {
 func clustering(listen net.Listener) {
   log.Printf("[Debug] Start CLUSTERING\n")
   if IsClustered() {
-    log.Printf("[Debug] This node join to cluster already.")
-    log.Printf("[Debug] 'cacis slave --leave' to leave cluster")
+    log.Printf("[Warn] This node join to cluster already.")
+    log.Printf("[Warn] 'cacis slave --leave' to leave cluster")
     return
   }
   // Socket
@@ -132,9 +131,7 @@ func clustering(listen net.Listener) {
   cLayer.Payload = loadPayload(conn2slave, cLayer.Length)
 
   log.Printf("\n[Debug] Clustering...\n")
-  result, err := cacis.ExecCmd(string(cLayer.Payload), true)
-  fmt.Println(string(result))
-  cacis.Error(err)
+  cacis.ExecCmd(string(cLayer.Payload), true)
 
   log.Printf("[Debug] End CLUSTERING\n")
   conn2slave.Close()
