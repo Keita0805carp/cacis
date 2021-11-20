@@ -61,7 +61,7 @@ func setupMicrok8s(listen net.Listener) {
 }
 
 func recieveComponentsList(listen net.Listener) map[string]string {
-  log.Printf("[Debug] start: RECIEVE COMPONENTS LIST\n")
+  log.Printf("[Debug] Start Recieve Components List\n")
   // Socket
   conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -70,7 +70,7 @@ func recieveComponentsList(listen net.Listener) map[string]string {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -91,13 +91,13 @@ func recieveComponentsList(listen net.Listener) map[string]string {
   err = json.Unmarshal(cLayer.Payload, &tmpList)
   cacis.Error(err)
 
-  log.Printf("[Debug] end: RECIEVE COMPONENTS LIST\n")
+  log.Printf("[Debug] End Recieve Components List\n")
   conn2slave.Close()
   return tmpList
 }
 
 func recieveImg(listen net.Listener, s []string) {
-  log.Printf("[Debug] start: RECIEVE COMPONENT IMAGES\n")
+  log.Printf("[Debug] Start Recieve Component Images\n")
   // Socket
   conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -106,7 +106,7 @@ func recieveImg(listen net.Listener, s []string) {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -115,7 +115,7 @@ func recieveImg(listen net.Listener, s []string) {
   for _, fileName := range s {
     recieveFile(conn2slave, fileName)
   }
-  log.Printf("[Debug] end: RECIEVE COMPONENT IMAGES\n")
+  log.Printf("[Debug] End Recieve Component Images\n")
   conn2slave.Close()
 }
 

@@ -13,7 +13,7 @@ import (
 )
 
 func installSnapd() {
-  log.Printf("Install snap via apt\n")
+  log.Printf("[Debug] Install snap via apt\n")
   if cacis.IsCommandAvailable("snap") {
     log.Printf("[Debug] Already installed\n")
     return
@@ -22,7 +22,7 @@ func installSnapd() {
 }
 
 func sendSnapd(conn net.Conn) {
-  log.Print("\n[Debug] Start Send Snapd\n")
+  log.Print("[Debug] Start Send Snapd\n")
   s := []string{"snapd.zip"}
 
   for _, fileName := range s {
@@ -65,7 +65,7 @@ func sendMicrok8s(conn net.Conn) {
 }
 
 func installMicrok8s() {
-  log.Printf("Install microk8s via snap\n")
+  log.Printf("[Debug] Install microk8s via snap\n")
   if cacis.IsCommandAvailable("microk8s") {
     log.Printf("[Debug] Already installed\n")
     return 
@@ -117,7 +117,7 @@ func clustering(conn net.Conn) {
 }
 
 func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
-  log.Printf("\nDebug: [start] Unclustering\n")
+  log.Printf("[Debug] Start Unclustering\n")
 
   buf := make([]byte, cLayer.Length)
   packetLength, err := conn.Read(buf)
@@ -126,7 +126,7 @@ func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
   //fmt.Println(string(buf))
 
   cacis.ExecCmd("microk8s remove-node " + string(buf), true)
-  log.Printf("\nDebug: [end] Unclustering\n")
+  log.Printf("[Debug] End Unclustering\n")
 }
 
 func removeNotReadyNode() {
@@ -136,8 +136,11 @@ func removeNotReadyNode() {
     nodes = getNodeStatus(nodes)
     for k, v := range nodes {
       if k != "master" && v > 5 {
-        log.Printf("%s is unstable. Force remove...\n", k)
-        cacis.ExecCmd("microk8s remove-node " + k + " --force", false)
+        log.Printf("Node '%s' is unstable. Force remove...\n", k)
+        stdout, err := cacis.ExecCmd("microk8s remove-node " + k, false)
+        if stdout != "" || err != nil {
+          cacis.ExecCmd("microk8s remove-node " + k + " --force", false)
+        }
         delete(nodes, k)
       }
     }
@@ -147,7 +150,7 @@ func removeNotReadyNode() {
 func getNodeStatus(nodes map[string]int) map[string]int {
   stdout, err := cacis.ExecCmd("microk8s kubectl get nodes", false)
   if err != nil {
-    log.Printf("[Error] Failed to get nodes.")
+    log.Printf("[Error] Failed to get nodes.\n")
     return nodes
   }
   lines := strings.Split(stdout, "\n")

@@ -11,7 +11,7 @@ import (
 )
 
 func installSnapd() {
-  log.Println("[Debug] Check Snap")
+  log.Printf("[Debug] Check Snap\n")
   if cacis.IsCommandAvailable("snap") {
     /// if debian(raspberry pi os)
       //recieve zip
@@ -19,29 +19,29 @@ func installSnapd() {
     return
   }
 
-  log.Println("[Debug] Start RECIEVE snapd and install")
+  log.Printf("[Debug] Start RECIEVE snapd and install\n")
   // Socket
   conn, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
   defer conn.Close()
 
-  log.Println("[Debug] Request snapd")
+  log.Printf("[Debug] Request snapd\n")
   cLayer := cacis.RequestSnapd()
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
 
   recieveFile(conn, "snapd.zip")
 
-  log.Println("[Debug] End RECIEVE COMPONENT IMAGES")
+  log.Printf("[Debug] End RECIEVE COMPONENT IMAGES\n")
   cacis.ExecCmd("dpkg -i ./*.deb", false)
   //reboot
   cacis.ExecCmd("snap install core", false)
 }
 
 func recieveMicrok8s(listen net.Listener) {
-  log.Println("[Debug] Start RECIEVE SNAP FILES")
+  log.Printf("[Debug] Start RECIEVE SNAP FILES\n")
   // Socket
   conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -50,7 +50,7 @@ func recieveMicrok8s(listen net.Listener) {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -59,13 +59,13 @@ func recieveMicrok8s(listen net.Listener) {
   for _, fileName := range cacis.Microk8sSnaps {
     recieveFile(conn2slave, fileName)
   }
-  log.Println("[Debug] End RECIEVE SNAP FILES")
+  log.Printf("[Debug] End RECIEVE SNAP FILES\n")
   conn2slave.Close()
 }
 
 func installMicrok8s() {
   log.Printf("Install microk8s via snap\n")
-  log.Printf("Installing...")
+  log.Printf("Installing...\n")
   cacis.ExecCmd("snap ack " + targetDir + cacis.Microk8sSnaps[0], false)
   cacis.ExecCmd("snap install " + targetDir + cacis.Microk8sSnaps[1] + " --classic", true)
   log.Printf("[Debug] Installed\n")
@@ -104,8 +104,8 @@ func IsClustered() bool {
 func clustering(listen net.Listener) {
   log.Printf("[Debug] Start CLUSTERING\n")
   if IsClustered() {
-    log.Printf("[Warn] This node join to cluster already.")
-    log.Printf("[Warn] 'cacis slave --leave' to leave cluster")
+    log.Printf("[Warn] This node join to cluster already.\n")
+    log.Printf("[Warn] 'cacis slave --leave' to leave cluster\n")
     return
   }
   // Socket
@@ -116,7 +116,7 @@ func clustering(listen net.Listener) {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -130,7 +130,7 @@ func clustering(listen net.Listener) {
   log.Printf("Debug: Read Packet PAYLOAD\n")
   cLayer.Payload = loadPayload(conn2slave, cLayer.Length)
 
-  log.Printf("\n[Debug] Clustering...\n")
+  log.Printf("[Debug] Clustering...\n")
   cacis.ExecCmd(string(cLayer.Payload), true)
 
   log.Printf("[Debug] End CLUSTERING\n")

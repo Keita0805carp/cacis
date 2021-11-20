@@ -20,7 +20,7 @@ func UnstableWifiEvent(cancel chan struct{}) {
       cntUnstable = 0
     }
     if cntUnstable > 5 {
-      log.Println("Unstable WiFi Connection")
+      log.Printf("Unstable WiFi Connection\n")
       close(cancel)
       return
     }
@@ -33,6 +33,7 @@ func isWifiStable() bool {
   if (rssi > -70) {
     return true
   } else {
+    log.Printf("[Info] RSSI: %d\n", rssi)
     return false
   }
 }
@@ -57,6 +58,6 @@ func getRSSI() int {
     rssi, err =  strconv.Atoi(parse)
     cacis.Error(err)
   }
-  log.Printf("[Info] RSSI: %d\n", rssi)
+  //log.Printf("[Info] RSSI: %d\n", rssi)
   return rssi
 }
