@@ -4,12 +4,13 @@ import (
   "log"
 
   "github.com/keita0805carp/cacis/slave"
-  "github.com/keita0805carp/cacis/connection"
 
   "github.com/spf13/cobra"
 )
 
 var (
+  leave bool
+
   slaveCmd = &cobra.Command{
     Use: "slave",
     Short: "Run Slave Process",
@@ -24,22 +25,18 @@ func slaveCommand(cmd *cobra.Command, args []string) {
 }
 
 func slaveAction() (err error) {
-  log.Printf("\n[Debug]: Run Main Slave Process\n")
+  if leave {
+    log.Printf("[Debug]: Manual leave\n")
+    slave.Unclustering()
+    return
+  }
 
-  ssid, pw := connection.GetWifiInfo()
-  connection.Connect(ssid, pw)
-
-  cancel := make(chan struct{})
-  go connection.UnstableWifiEvent(cancel)
   slave.Main()
-
-  <- cancel
-
-  slave.Unclustering()
 
   return nil
 }
 
 func init() {
   RootCmd.AddCommand(slaveCmd)
+  slaveCmd.Flags().BoolVarP(&leave, "leave", "l", false, "Manual leave from k8s cluster")
 }

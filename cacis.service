@@ -3,6 +3,7 @@ Description=cacis.service
 
 [Service]
 ExecStart=/usr/local/bin/cacis master --main
+#ExecStart=/usr/local/bin/cacis slave
 ExecStop=/bin/kill -SIGTERM $MAINPID
 #Restart=always
 WorkingDirectory=/home/ubuntu/go/src/github.com/keita0805carp/cacis

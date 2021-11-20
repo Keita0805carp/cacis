@@ -40,12 +40,12 @@ func DHCP(cancel chan struct{}) {
   //fn := func(l *logrus.Logger) { l.SetLevel(logrus.FatalLevel) } //{Debug, Info, Warn, Eoror, Fatal}
   fn(log.Logger)
 
+  log.Printf("[Debug] Running dhcpd...\n")
   srv, err := server.Start(config)
   cacis.Error(err)
-  log.Println("[Debug] Running dhcpd...")
 
   <-cancel
   srv.Close()
 
-  log.Println("[Debug] Terminated dhcpd...")
+  log.Printf("[Debug] Terminated dhcpd...\n")
 }

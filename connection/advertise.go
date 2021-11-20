@@ -52,7 +52,7 @@ func Advertise(cancel chan struct{}, UUID, adapterAddr, adapterId, ssid, pass st
 }
 
 func Initialize() (string, string) {
-  log.Println("[Debug] Initialize Bluetooth")
+  log.Printf("[Debug] Initialize Bluetooth\n")
 
   adaptersInfo, err := hw.GetAdapters()
   adapterInfo := adaptersInfo[0]

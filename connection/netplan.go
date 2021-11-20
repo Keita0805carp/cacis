@@ -20,15 +20,21 @@ func Connect(ssid, pw string) {
   log.Printf("[Info]  SSID: %s\n", ssid)
   log.Printf("[Info]  PASS: %s\n", pw)
 
-  log.Println("[Debug] Apply netplan config")
+  log.Printf("[Debug] Apply netplan config\n")
   cacis.ExecCmd("netplan apply", false)
-  log.Println("[Debug] Applied netplan config")
+  log.Printf("[Debug] Applied netplan config\n")
   time.Sleep(10 * time.Second)
+}
+
+func Disconnect() {
+  log.Printf("[Debug] Delete netplan config\n")
+  delNetplanConfig()
+  log.Printf("[Debug] Apply netplan config\n")
 }
 
 func genNetplanConfig(ssid, pw string) {
 
-  log.Println("[Debug] Generate netplan Config...")
+  log.Printf("[Debug] Generate netplan Config...\n")
   bytes, err := ioutil.ReadFile(netplanConfTemplatePath)
   cacis.Error(err)
   config := string(bytes)
@@ -37,13 +43,13 @@ func genNetplanConfig(ssid, pw string) {
   config = strings.Replace(config, "{{PASSWORD}}", pw, 1)
 
   ioutil.WriteFile(netplanConfPath, []byte(config), 0644)
-  log.Println("[Debug] Generated netplan Config")
+  log.Printf("[Debug] Generated netplan Config\n")
 }
 
 func delNetplanConfig() {
   err := os.Remove(netplanConfPath)
   cacis.Error(err)
   cacis.ExecCmd("netplan apply", false)
-  log.Println("[Debug] Clean netplan")
+  log.Printf("[Debug] Clean netplan\n")
 }
 

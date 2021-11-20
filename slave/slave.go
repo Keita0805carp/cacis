@@ -9,6 +9,7 @@ import (
 
   "github.com/keita0805carp/cacis/cacis"
   "github.com/keita0805carp/cacis/master"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/containerd/containerd"
 )
@@ -22,23 +23,34 @@ const (
 )
 
 func Main() {
-  //TODO? checkSnapd()
-  //requestSnapd()
-  //installSnapd()
+  for {
+    log.Printf("[Debug]: Run Main Slave Process\n")
+    cancel := make(chan struct{})
+    listen, err := net.Listen("tcp", ":27001")
+    cacis.Error(err)
 
-  listen, err := net.Listen("tcp", ":27001")
-  cacis.Error(err)
+    ssid, pw := connection.GetWifiInfo()
+    connection.Connect(ssid, pw)
 
-  if !cacis.IsCommandAvailable("microk8s") {
-    recieveMicrok8s(listen)
-    installMicrok8s()
-    setupMicrok8s(listen)
+    if !cacis.IsCommandAvailable("microk8s") {
+      cacis.CreateTempDir()
+      recieveMicrok8s(listen)
+      installMicrok8s()
+      setupMicrok8s(listen)
+    }
+
+    WaitReadyMicrok8s()
+    clustering(listen)
+    labelNode()
+
+    go connection.UnstableWifiEvent(cancel)
+
+    <- cancel
+
+    Unclustering()
+    connection.Disconnect()
+    WaitReadyMicrok8s()
   }
-
-  waitReadyMicrok8s()
-  clustering(listen)
-
-  //TODO remove microk8s
 }
 
 func setupMicrok8s(listen net.Listener) {
@@ -49,7 +61,7 @@ func setupMicrok8s(listen net.Listener) {
 }
 
 func recieveComponentsList(listen net.Listener) map[string]string {
-  log.Printf("[Debug] start: RECIEVE COMPONENTS LIST\n")
+  log.Printf("[Debug] Start Recieve Components List\n")
   // Socket
   conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -58,7 +70,7 @@ func recieveComponentsList(listen net.Listener) map[string]string {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -79,13 +91,13 @@ func recieveComponentsList(listen net.Listener) map[string]string {
   err = json.Unmarshal(cLayer.Payload, &tmpList)
   cacis.Error(err)
 
-  log.Printf("[Debug] end: RECIEVE COMPONENTS LIST\n")
+  log.Printf("[Debug] End Recieve Components List\n")
   conn2slave.Close()
   return tmpList
 }
 
 func recieveImg(listen net.Listener, s []string) {
-  log.Printf("[Debug] start: RECIEVE COMPONENT IMAGES\n")
+  log.Printf("[Debug] Start Recieve Component Images\n")
   // Socket
   conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -94,7 +106,7 @@ func recieveImg(listen net.Listener, s []string) {
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn2master.Write(packet)
-  log.Printf("Requested\n\n")
+  log.Printf("Requested\n")
   conn2master.Close()
 
   conn2slave, err := listen.Accept()
@@ -103,7 +115,7 @@ func recieveImg(listen net.Listener, s []string) {
   for _, fileName := range s {
     recieveFile(conn2slave, fileName)
   }
-  log.Printf("[Debug] end: RECIEVE COMPONENT IMAGES\n")
+  log.Printf("[Debug] End Recieve Component Images\n")
   conn2slave.Close()
 }
 
@@ -133,60 +145,6 @@ func importAllImg(m map[string]string) {
     importImg(imageRef, targetDir + importFile)
     log.Printf("[Info]  end\n")
     }
-}
-
-func clustering(listen net.Listener) {
-  log.Printf("[Debug] Start CLUSTERING\n")
-  // Socket
-  conn2master, err := net.Dial("tcp", masterIP+":"+masterPort)
-  cacis.Error(err)
-  log.Printf("[Debug] Request Clustering\n")
-  cLayer := cacis.RequestClustering()
-  packet := cLayer.Marshal()
-  //fmt.Println(packet)
-  conn2master.Write(packet)
-  log.Printf("Requested\n\n")
-  conn2master.Close()
-
-  conn2slave, err := listen.Accept()
-  cacis.Error(err)
-
-
-  packet = make([]byte, cacis.CacisLayerSize)
-  packetLength, err := conn2slave.Read(packet)
-  cacis.Error(err)
-  log.Printf("[Debug] Read Packet HEADER. len: %d\n", packetLength)
-  cLayer = cacis.Unmarshal(packet)
-  log.Printf("Debug: Read Packet PAYLOAD\n")
-  cLayer.Payload = loadPayload(conn2slave, cLayer.Length)
-
-  log.Printf("\n[Debug] Clustering...\n")
-  result, err := cacis.ExecCmd(string(cLayer.Payload), true)
-  fmt.Println(string(result))
-  cacis.Error(err)
-
-  log.Printf("[Debug] End CLUSTERING\n")
-  conn2slave.Close()
-}
-
-func Unclustering() {
-  log.Printf("[Debug] Start UNCLUSTERING\n")
-  log.Printf("[Debug] Leaving...\n")
-  cacis.ExecCmd("microk8s leave", true)
-  // Socket
-  conn, err := net.Dial("tcp", masterIP+":"+masterPort)
-  cacis.Error(err)
-  defer conn.Close()
-
-  hostname, err := os.Hostname()
-  cacis.Error(err)
-
-  log.Printf("[Debug] Request Unclustering\n")
-  cLayer := cacis.RequestUnclustering([]byte(hostname))
-  packet := cLayer.Marshal()
-  //fmt.Println(packet)
-  conn.Write(packet)
-  log.Printf("[Debug] End UNCLUSTERING\n")
 }
 
 func recieveFile(conn net.Conn, fileName string) {
@@ -223,6 +181,7 @@ func loadPayload(conn net.Conn, targetBytes uint64) []byte {
     //log.Printf("\r[Debug] recieving...")
     fmt.Printf("\r[Info]  Completed  %d  of %d", len(packet), int(targetBytes))
   }
+  fmt.Printf("\r[Info]  Completed  %d  of %d\n", len(packet), int(targetBytes))
   return packet
 }
 

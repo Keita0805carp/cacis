@@ -1,7 +1,7 @@
 package cacis
 
 const (
-  MasterIP = "10.0.100.1"
+  MasterIP = "172.30.0.1"
   MasterPort = "27001"
   TargetDir = "./tmp/"
   ContainerdSock = "/var/snap/microk8s/common/run/containerd.sock"
@@ -15,6 +15,10 @@ const (
 )
 
 var (
+  NodeLabels = map[string]string {
+    "testLabel1"           : "test1",
+    "testLabel2"           : "test2",
+  }
   ComponentsList = map[string]string {
     "cni.img"             : "docker.io/calico/cni:v3.19.1",
     "pause.img"           : "k8s.gcr.io/pause:3.1",
@@ -23,12 +27,12 @@ var (
     "node.img"            : "docker.io/calico/node:v3.19.1",
     "coredns.img"         : "docker.io/coredns/coredns:1.8.0",
     "metrics-server.img"  : "k8s.gcr.io/metrics-server/metrics-server:v0.5.0",
-    "dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.2.0",
+    //"dashboard.img"       : "docker.io/kubernetesui/dashboard:v2.2.0",
     "hostpath-arm64.img"  : "docker.io/cdkbot/hostpath-provisioner-arm64:1.0.0",
     "registry-arm64.img"  : "docker.io/cdkbot/registry-arm64:2.6",
     "metrics-scraper.img" : "docker.io/kubernetesui/metrics-scraper:v1.0.6",
   }
-  Micork8sRevision = "microk8s_2494"
-  Microk8sSnaps = []string{Micork8sRevision+".assert", Micork8sRevision+".snap"}
+  Microk8sSnap = "microk8s_cacis"
+  Microk8sSnaps = []string {"microk8s_cacis.assert", "microk8s_cacis.snap"}
   Snapd = []string{"core_11420.assert", "core_11420.snap"}
 )

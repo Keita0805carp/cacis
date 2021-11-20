@@ -3,7 +3,9 @@ package cmd
 import (
   "fmt"
 
+  "github.com/keita0805carp/cacis/cacis"
   "github.com/keita0805carp/cacis/slave"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/spf13/cobra"
 )
@@ -25,6 +27,8 @@ func cleanupCommand(cmd *cobra.Command, args []string) {
 func cleanupAction() (err error) {
   fmt.Println("cleanup command")
   slave.RemoveMicrok8s()
+  connection.Disconnect()
+  cacis.RemoveTempDir()
   return nil
 }
 

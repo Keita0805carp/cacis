@@ -1,14 +1,17 @@
 package master
 
 import (
-  "os"
   "log"
   "net"
-  "regexp"
+  "os"
+  "os/signal"
+  "time"
   "strings"
   "context"
+  "syscall"
 
   "github.com/keita0805carp/cacis/cacis"
+  "github.com/keita0805carp/cacis/connection"
 
   "github.com/containerd/containerd"
   "github.com/containerd/containerd/platforms"
@@ -27,6 +30,7 @@ var (
 )
 
 func Setup() {
+  cacis.CreateTempDir()
   downloadMicrok8s()
   installMicrok8s()
   enableMicrok8s()
@@ -34,8 +38,25 @@ func Setup() {
   //fmt.Println(getImgList())
 }
 
-func Main(cancel chan struct{}) {
-  log.Println("[Debug] Starting Main Server")
+func Main() {
+  terminate := make(chan os.Signal, 1)
+  signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
+  cancel := make(chan struct{})
+
+  cacis.ExecCmd("microk8s start", true)
+  connection.Main(cancel)
+  go listening(cancel)
+
+  go removeNotReadyNode()
+  <-terminate
+  close(cancel)
+  log.Printf("[Debug]: Terminating Main Master Process...\n")
+  time.Sleep(10 * time.Second)
+  log.Printf("[Debug]: Terminated Main Master Process\n")
+}
+
+func listening(cancel chan struct{}) {
+  log.Printf("[Debug] Start Main Server\n")
   // Socket
   listen, err := net.Listen("tcp", masterIP+":"+masterPort)
   cacis.Error(err)
@@ -44,14 +65,14 @@ func Main(cancel chan struct{}) {
   for {
     select {
     default:
-      log.Printf("[Debug] Waiting slave\n\n")
+      log.Printf("[Debug] Listen Request from Slave\n")
       conn2master, err := listen.Accept()
       cacis.Error(err)
 
       go handling(conn2master)
     case <- cancel:
       log.Println("[Debug] Terminating Main server...")
-      cacis.ExecCmd("microk8s stop", false)
+      //cacis.ExecCmd("microk8s stop", false)
       return
     }
   }
@@ -72,78 +93,78 @@ func handling(conn2master net.Conn) {
   /// Swtich Type
   if cLayer.Type == 10 {  /// request Components List
 
-    log.Println("[Debug] Dialing...")
+    log.Printf("[Debug] Dialing...\n")
     conn2slave, err := net.Dial("tcp", remoteIP+":27001")
     cacis.Error(err)
 
     conn2master.Close()
-    log.Println("[Debug] Type = 10")
+    log.Printf("[Debug] Type = 10\n")
     sendComponentsList(conn2slave)
 
     conn2slave.Close()
 
   } else if cLayer.Type == 20 {  /// request Image
 
-    log.Println("[Debug] Dialing...")
+    log.Printf("[Debug] Dialing...\n")
     conn2slave, err := net.Dial("tcp", remoteIP+":27001")
     cacis.Error(err)
 
     conn2master.Close()
-    log.Println("[Debug] Type = 20")
+    log.Print("[Debug] Type = 20\n")
     sendImg(conn2slave)
 
     conn2slave.Close()
 
   } else if cLayer.Type == 30 {  /// request microk8s snap
 
-    log.Println("[Debug] Dialing...")
+    log.Print("[Debug] Dialing...\n")
     conn2slave, err := net.Dial("tcp", remoteIP+":27001")
     cacis.Error(err)
 
     conn2master.Close()
-    log.Println("[Debug] Type = 30")
+    log.Printf("[Debug] Type = 30\n")
     sendMicrok8s(conn2slave)
 
     conn2slave.Close()
 
   } else if cLayer.Type == 40 {  /// request snapd
 
-    log.Println("[Debug] Dialing...")
+    log.Printf("[Debug] Dialing...\n")
     conn2slave, err := net.Dial("tcp", remoteIP+":27001")
     cacis.Error(err)
 
     conn2master.Close()
-    log.Println("[Debug] Type = 40")
+    log.Printf("[Debug] Type = 40\n")
     sendSnapd(conn2slave)
 
     conn2slave.Close()
 
   } else if cLayer.Type == 50 {  /// request clustering
 
-    log.Println("[Debug] Dialing...")
+    log.Printf("[Debug] Dialing...\n")
     conn2slave, err := net.Dial("tcp", remoteIP+":27001")
     cacis.Error(err)
 
     conn2master.Close()
-    log.Println("[Debug] Type = 50")
+    log.Printf("[Debug] Type = 50\n")
     clustering(conn2slave)
 
     conn2slave.Close()
 
   } else if cLayer.Type == 60 {  /// request unclustering
 
-    log.Println("[Debug] Type = 60")
+    log.Printf("[Debug] Type = 60\n")
     unclustering(conn2master, cLayer)
     conn2master.Close()
 
   } else {
     conn2master.Close()
-    log.Println("[Error] Unknown Type")
+    log.Printf("[Error] Unknown Type\n")
   }
 }
 
 func getImgList() []string {
-  log.Printf("\n[Info] Show images list")
+  log.Printf("[Info] Show images list\n")
 
   ctx, client := ContainerdInit()
   defer client.Close()
@@ -158,7 +179,7 @@ func getImgList() []string {
 }
 
 func pullImg(imageName string) {
-  log.Printf("\n[Info]  Pulling   %s ...", imageName)
+  log.Printf("[Info]  Pulling   %s ...\n", imageName)
 
   ctx, client := ContainerdInit()
   defer client.Close()
@@ -172,7 +193,7 @@ func pullImg(imageName string) {
 
   image := containerd.NewImageWithPlatform(client, contents, platforms.All)
   if image == nil {
-    log.Println("[Error] Fail to Pull")
+    log.Printf("[Error] Fail to Pull\n")
     }
   log.Printf("\r[Info]  Pulled    %s Completely\n", imageName)
 }
@@ -200,7 +221,7 @@ func exportImg(filePath, imageRef string){
 
 func exportAndPullAllImg(onlyExport bool){
   log.Printf("[Debug] start: Pull and Export Images\n")
-  log.Printf("\n[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
+  log.Printf("[Debug] Pull %d images for Kubernetes Components\n", len(componentsList))
   for exportFile, imageRef := range componentsList {
     //fmt.Printf("%s : %s\n", exporttDir + exportFile, imageRef)
     if onlyExport {
@@ -210,21 +231,21 @@ func exportAndPullAllImg(onlyExport bool){
       exportImg(targetDir + exportFile, imageRef)
     }
   }
-  log.Printf("\n[Debug] end: Pull and Export Images\n\n")
+  log.Printf("[Debug] end: Pull and Export Images\n")
 }
 
 func sendComponentsList(conn net.Conn) {
   /// Send Components List
-  log.Printf("\n[Debug] start: Send Components List\n")
+  log.Printf("[Debug] start: Send Components List\n")
   cLayer := cacis.SendComponentsList(componentsList)
   packet := cLayer.Marshal()
   //fmt.Println(packet)
   conn.Write(packet)
-  log.Print("\n[Debug] end: Send Components List\n")
+  log.Print("[Debug] end: Send Components List\n")
 }
 
 func sendImg(conn net.Conn) {
-  log.Print("\n[Debug] start: Send Components Images\n")
+  log.Print("[Debug] start: Send Components Images\n")
   s := cacis.SortKeys(componentsList)
 
   for _, fileName := range s {
@@ -240,40 +261,11 @@ func sendImg(conn net.Conn) {
   log.Printf("\n[Debug] end: Send Components Images\n")
 }
 
-func clustering(conn net.Conn) {
-  log.Print("\nDebug: [start] Clustering\n")
-  output, err := cacis.ExecCmd("microk8s add-node", false)
-  cacis.Error(err)
-  //fmt.Println(string(output))
-  regex := regexp.MustCompile("microk8s join " + masterIP + ".*")
-  joinCmd := regex.FindAllStringSubmatch(string(output), 1)[0][0]
-
-  /// Send CLuster Info
-  cLayer := cacis.SendClusterInfo([]byte(joinCmd))
-  packet := cLayer.Marshal()
-  //fmt.Println(cLayer)
-  conn.Write(packet)
-  log.Printf("\nDebug: [end] Clustering\n")
-}
-
-func unclustering(conn net.Conn, cLayer cacis.CacisLayer) {
-  log.Printf("\nDebug: [start] Unclustering\n")
-
-  buf := make([]byte, cLayer.Length)
-  packetLength, err := conn.Read(buf)
-  cacis.Error(err)
-  log.Printf("[Debug] Read Packet PAYLOAD. len: %d\n", packetLength)
-  //fmt.Println(string(buf))
-
-  cacis.ExecCmd("microk8s remove-node " + string(buf), true)
-  log.Printf("\nDebug: [end] Unclustering\n")
-}
-
 func readFileByte(fileName string) []byte {
   /// File
   filePath := targetDir + fileName
 
-  log.Printf("\n[Debug] Read file '%s'\n", fileName)
+  log.Printf("[Debug] Read file '%s'\n", fileName)
   //filePath := "./test/hoge1.txt"
   file, err := os.Open(filePath)
   cacis.Error(err)

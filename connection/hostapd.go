@@ -25,11 +25,11 @@ func StartHostapd(cancel chan struct{}, ssid, pw string) {
 
   <-cancel
   cacis.ExecCmd("killall -q hostapd", false)
-  log.Println("[Debug] Terminated hostapd")
+  log.Printf("[Debug] Terminated hostapd\n")
 }
 
 func genConfig(ssid, pw string) {
-  log.Println("[Debug] Generate hostapd Config...")
+  log.Printf("[Debug] Generate hostapd Config...\n")
   bytes, err := ioutil.ReadFile(hostapdConfTemplatePath)
   cacis.Error(err)
   config := string(bytes)
@@ -38,6 +38,6 @@ func genConfig(ssid, pw string) {
   config = strings.Replace(config, "{{PASSWORD}}", pw, 1)
 
   ioutil.WriteFile(hostapdConfPath, []byte(config), 0644)
-  log.Println("[Debug] Generated hostapd Config")
+  log.Printf("[Debug] Generated hostapd Config\n")
 }
 
