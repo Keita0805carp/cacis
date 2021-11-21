@@ -14,9 +14,13 @@ Container-based Adaptive Clustering IoT System
   - hostapd
   - netplan
   - avahi-daemon (mDNS)
+  - bluez, pi-bluetooth
 
 ### Setup
 ```
+## Add boot parameter (for Raspberry Pi)
+Add `cgroup_enable=memory cgroup_memory=1` to `/boot/firmware/cmdline.txt`
+
 ## Install Go
 $ rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.linux-amd64.tar.gz
 $ export PATH=$PATH:/usr/local/go/bin
@@ -26,27 +30,14 @@ $ go version
 $ sudo apt install snapd
 $ sudo snap instal core18
 
-## Install Microk8s
+## Install Microk8s (Option)
 $ sudo snap install microk8s --classic
 
-## Only Master
+## For Master
 $ sudo apt install hostapd
 
-## Only Slave
+## For Slave
 $ sudo apt install netplan.io
-```
-
-```
-# Only Master
-# $ ifconfig wlan0 172.30.0.1/24
-# /etc/systemd/network/50-wlan0.network
-[Match]
-Name=wlan0
-
-[Network]
-DNS=172.30.0.1
-Address=172.30.0.1/24
-Gateway=172.30.0.1
 ```
 
 ### Default Add-on
