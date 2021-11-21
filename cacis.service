@@ -2,11 +2,11 @@
 Description=cacis.service
 
 [Service]
-ExecStart=/usr/local/bin/cacis master --main
-#ExecStart=/usr/local/bin/cacis slave
+ExecStart=./main master --main
+#ExecStart=./main slave
 ExecStop=/bin/kill -SIGTERM $MAINPID
 #Restart=always
-WorkingDirectory=/home/ubuntu/go/src/github.com/keita0805carp/cacis
+WorkingDirectory=/home/ubuntu/cacis
 Type=simple
 User=root
 TimeoutStopSec=15
