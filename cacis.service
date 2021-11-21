@@ -2,8 +2,8 @@
 Description=cacis.service
 
 [Service]
-ExecStart=./main master --main
-#ExecStart=./main slave
+ExecStart=/home/ubuntu/cacis/main master --main
+#ExecStart=/home/ubuntu/cacis/main slave
 ExecStop=/bin/kill -SIGTERM $MAINPID
 #Restart=always
 WorkingDirectory=/home/ubuntu/cacis
