@@ -3,6 +3,7 @@ package cacis
 const (
   MasterIP = "172.30.0.1"
   MasterPort = "27001"
+  MasterInterface = "wlan0"
   TargetDir = "./tmp/"
   ContainerdSock = "/var/snap/microk8s/common/run/containerd.sock"
   ContainerdNameSpace = "k8s.io"

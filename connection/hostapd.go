@@ -14,7 +14,7 @@ const (
 )
 
 func StartHostapd(cancel chan struct{}, ssid, pw string) {
-  ipSet("wlan0")
+  ipSet(cacis.MasterInterface)
   genConfig(ssid, pw)
   log.Printf("[Info]  SSID: %s\n", ssid)
   log.Printf("[Info]  PASS: %s\n", pw)
@@ -43,6 +43,6 @@ func genConfig(ssid, pw string) {
 }
 
 func ipSet(iface string) {
-  cacis.ExecCmd("ifconfig " + iface + " " + cacis.MasterIP , false)
+  cacis.ExecCmd("ifconfig " + iface + " " + cacis.MasterIP + "/24" , false)
 }
 
