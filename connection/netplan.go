@@ -29,6 +29,7 @@ func Connect(ssid, pw string) {
 func Disconnect() {
   log.Printf("[Debug] Delete netplan config\n")
   delNetplanConfig()
+  cacis.ExecCmd("route del default gw 172.30.0.254" , false) // Containerd needs default gateway to start
   log.Printf("[Debug] Apply netplan config\n")
 }
 

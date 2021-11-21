@@ -44,5 +44,6 @@ func genConfig(ssid, pw string) {
 
 func ipSet(iface string) {
   cacis.ExecCmd("ifconfig " + iface + " " + cacis.MasterIP + "/24" , false)
+  cacis.ExecCmd("route add default gw 172.30.0.254" , false) // Containerd needs default gateway to start
 }
 
